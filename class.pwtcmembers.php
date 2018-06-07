@@ -24,13 +24,25 @@ class PwtcMembers {
     }
 
     public static function members_lookup_callback() {
-        $users_per_page = 10;
+		$limit = intval($_POST['limit']);
         $query_args = [
             'meta_key' => 'last_name',
             'orderby' => 'meta_value',
             'order' => 'ASC',
-            'number' => $users_per_page
-        ];
+            'number' => $limit
+		];
+		
+		$page_number = 1;
+		if (isset($_POST['page_number'])) {
+			$page_number = intval($_POST['page_number']);
+		}
+		if ($page_number == 1) {
+			$offset = 0;  
+		}
+		else {
+			$offset = ($page_number-1)*$limit;
+		}
+		$query_args['offset'] = $offset;
 
         $member_names = [];
         $user_query = new WP_User_Query( $query_args );
@@ -45,10 +57,17 @@ class PwtcMembers {
                     'email' => $member_info->user_email
                 ];
             }
-        }
-        wp_reset_postdata();
+		}
+		
+		$total_users = $user_query->total_users;
+		$total_pages = ceil($user_query->total_users/$limit);
+
         $response = array(
-            'members' => $member_names);
+			'members' => $member_names,
+			'total_pages' => $total_pages,
+			'page_number' => $page_number
+		);
+
         echo wp_json_encode($response);
         wp_die();
     }
@@ -59,7 +78,7 @@ class PwtcMembers {
  
 	// Generates the [pwtc_members_lookup] shortcode.
 	public static function shortcode_members_lookup($atts) {
-		$a = shortcode_atts(array('limit' => 0), $atts);
+		$a = shortcode_atts(array('limit' => 10), $atts);
 		$current_user = wp_get_current_user();
 		if ( 0 == $current_user->ID ) {
 			return 'Please log in to search the members directory.';
@@ -71,17 +90,50 @@ class PwtcMembers {
 		jQuery(document).ready(function($) { 
 
 			function populate_members_table(members) {
-				var header = '<table><tr><th>ID</th><th>First Name</th><th>Last Name</th><th>Email</th></tr></table>';
+				var header = '<table><tr style="text-align: left"><th>Email</th><th>Last Name</th><th>First Name</th></tr></table>';
 				$('.pwtc-members-display-div').append(header);
 				members.forEach(function(item) {
 					var data = '<tr userid="' + item.ID + '">' +
-					'<td>' + item.ID + '</td>' +
-					'<td>' + item.first_name + '</td>' +
+					'<td><a href="#"><i class="fa fa-user"></i></a> ' + item.email + '</td>' + 
 					'<td>' + item.last_name + '</td>' +
-					'<td>' + item.email + '</td></tr>';
+					'<td>' + item.first_name + '</td>' +
+					'</tr>';
 					$('.pwtc-members-display-div table').append(data);    
 				});
             }
+
+			function create_paging_form(pagenum, numpages) {
+				$('.pwtc-members-display-div').append(
+					'<form class="page-frm">' +
+                    '<input class="prev-btn button" style="margin: 0" type="button" value="< Prev"/>' +
+					'<span style="margin: 0 10px">Page ' + pagenum + ' of ' + numpages + '</span>' +
+                    '<input class="next-btn button" style="margin: 0" type="button" value="Next >"/>' +
+					'<span class="page-msg" style="margin: 0 10px"></span>' +
+					'<input name="pagenum" type="hidden" value="' + pagenum + '"/>' +
+					'<input name="numpages" type="hidden" value="' + numpages + '"/>' +
+					'</form>'
+				);
+				$('.pwtc-members-display-div .page-frm .prev-btn').on('click', function(evt) {
+					evt.preventDefault();
+					load_members_table('prev');
+				});
+				if (pagenum == 1) {
+					$('.pwtc-members-display-div .page-frm .prev-btn').attr("disabled", "disabled");
+				}
+				else {
+					$('.pwtc-members-display-div .page-frm .prev-btn').removeAttr("disabled");
+				}
+				$('.pwtc-members-display-div .page-frm .next-btn').on('click', function(evt) {
+					evt.preventDefault();
+					load_members_table('next');
+				});
+				if (pagenum == numpages) {
+					$('.pwtc-members-display-div .page-frm .next-btn').attr("disabled", "disabled");
+				}
+				else {
+					$('.pwtc-members-display-div .page-frm .next-btn').removeAttr("disabled");
+				}
+			}
 
 			function lookup_members_cb(response) {
 				var res = JSON.parse(response);
@@ -97,6 +149,9 @@ class PwtcMembers {
 					}
 					if (res.members.length > 0) {
 						populate_members_table(res.members);
+						if (res.total_pages > 1) {
+							create_paging_form(res.page_number, res.total_pages);
+						}
 					}
 					else {
 						$('.pwtc-members-display-div').append('<div>No members found.</div>');					
@@ -104,17 +159,32 @@ class PwtcMembers {
 				}
 			}   
 
-			function load_members_table() {
+			function load_members_table(mode) {
 				//var action = $('.pwtc-mapdb-search-div .search-frm').attr('action');
                 var action = "<?php echo admin_url('admin-ajax.php'); ?>";
 				var data = {
-					'action': 'pwtc_members_lookup'
+					'action': 'pwtc_members_lookup',
+					'limit': <?php echo $a['limit'] ?>
 				};
-				$('.pwtc-members-display-div').html('<i class="fa fa-spinner fa-pulse"></i> Loading...');
+				if (mode != 'search') {
+					var pagenum = $(".pwtc-members-display-div .page-frm input[name='pagenum']").val();
+					var numpages = $(".pwtc-members-display-div .page-frm input[name='numpages']").val();
+					if (mode == 'prev') {
+						data.page_number = parseInt(pagenum) - 1;
+					}
+					else if (mode == 'next') {
+						data.page_number = parseInt(pagenum) + 1;
+					}
+					$('.pwtc-members-display-div .page-frm .page-msg').html('<i class="fa fa-spinner fa-pulse"></i> Loading...');
+				}
+				else {
+					$('.pwtc-members-display-div').html('<i class="fa fa-spinner fa-pulse"></i> Loading...');
+				}
+
 				$.post(action, data, lookup_members_cb); 
 			}
 
-            load_members_table();
+            load_members_table('search');
 		});
 	</script>
 	<div class="pwtc-members-display-div"></div>
