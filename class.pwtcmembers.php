@@ -113,7 +113,25 @@ class PwtcMembers {
 			$roles[] = $tok;
 			$tok = strtok(",");
 		}
-		return $roles;
+		global $wp_roles;
+		$roles2 = [];
+		foreach ($roles as $role) {
+			if ($role == 'all') {
+				$roles2[] = [
+					'label' => 'All',
+					'value' => $role,
+				];
+			}
+			else {
+				if (isset($wp_roles->roles[$role])) {
+					$roles2[] = [
+						'label' => $wp_roles->roles[$role]['name'],
+						'value' => $role,
+					];	
+				}
+			}
+		}
+		return $roles2;
 	}
     
 	/*************************************************************/
@@ -129,7 +147,6 @@ class PwtcMembers {
 		}
 		else {
 			$roles = self::parse_roles($a['roles']);
-			//self::write_log($roles);
 			ob_start();
 	?>
 	<script type="text/javascript">
@@ -255,7 +272,7 @@ class PwtcMembers {
 				<div class="accordion-content" data-tab-content>
 					<form class="search-frm">
 						<?php if (count($roles) == 1) { ?>
-						<input class="role" type="hidden" name="role" value="<?php echo $roles[0]; ?>"/>
+						<input class="role" type="hidden" name="role" value="<?php echo $roles[0]['value']; ?>"/>
 						<?php } ?>
 						<div>
 							<div class="row">
@@ -279,7 +296,7 @@ class PwtcMembers {
                                 	<label>Role
 							        	<select class="role">
 										<?php foreach ( $roles as $role ) { ?>
-											<option value="<?php echo $role; ?>"><?php echo $role; ?></option>
+											<option value="<?php echo $role['value']; ?>"><?php echo $role['label']; ?></option>
 										<?php } ?>
                                         </select>                                
                                 	</label>
