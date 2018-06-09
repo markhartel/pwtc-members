@@ -31,6 +31,40 @@ class PwtcMembers {
             'order' => 'ASC',
             'number' => $limit
 		];
+
+		if (isset($_POST['first_name'])) {
+			if (!isset($query_args['meta_query'])) {
+				$query_args['meta_query'] = [];
+			}
+			$query_args['meta_query'][] = [
+				'key'     => 'first_name',
+				'value'   => $_POST['first_name'],
+				'compare' => 'LIKE'   
+			];
+		}
+
+		if (isset($_POST['last_name'])) {
+			if (!isset($query_args['meta_query'])) {
+				$query_args['meta_query'] = [];
+			}
+			$query_args['meta_query'][] = [
+				'key'     => 'last_name',
+				'value'   => $_POST['last_name'],
+				'compare' => 'LIKE'   
+			];
+		}
+
+		if (isset($_POST['email'])) {
+			$query_args['search'] = '*' . esc_attr($_POST['email']) . '*';
+			$query_args['search_columns'] = array( 'user_email' );
+		}	
+		
+		if (isset($_POST['role'])) {
+			$role = $_POST['role'];
+			if ($role != 'all') {
+				$query_args['role'] = $role;
+			}
+		}
 		
 		$page_number = 1;
 		if (isset($_POST['page_number'])) {
@@ -70,7 +104,17 @@ class PwtcMembers {
 
         echo wp_json_encode($response);
         wp_die();
-    }
+	}
+	
+	public static function parse_roles($role_str) {
+		$roles = [];
+		$tok = strtok($role_str, ",");
+		while ($tok !== false) {
+			$roles[] = $tok;
+			$tok = strtok(",");
+		}
+		return $roles;
+	}
     
 	/*************************************************************/
 	/* Shortcode report generation functions
@@ -78,12 +122,14 @@ class PwtcMembers {
  
 	// Generates the [pwtc_members_lookup] shortcode.
 	public static function shortcode_members_lookup($atts) {
-		$a = shortcode_atts(array('limit' => 10), $atts);
+		$a = shortcode_atts(array('limit' => 10, 'roles' => 'all'), $atts);
 		$current_user = wp_get_current_user();
 		if ( 0 == $current_user->ID ) {
 			return 'Please log in to search the members directory.';
 		}
 		else {
+			$roles = self::parse_roles($a['roles']);
+			//self::write_log($roles);
 			ob_start();
 	?>
 	<script type="text/javascript">
@@ -160,10 +206,13 @@ class PwtcMembers {
 			}   
 
 			function load_members_table(mode) {
-				//var action = $('.pwtc-mapdb-search-div .search-frm').attr('action');
                 var action = "<?php echo admin_url('admin-ajax.php'); ?>";
 				var data = {
 					'action': 'pwtc_members_lookup',
+					'role': $(".pwtc-members-search-div .search-frm .role").val(),
+					'email': $(".pwtc-members-search-div .search-frm input[name='email']").val().trim(),
+					'last_name': $(".pwtc-members-search-div .search-frm input[name='last_name']").val().trim(),
+					'first_name': $(".pwtc-members-search-div .search-frm input[name='first_name']").val().trim(),
 					'limit': <?php echo $a['limit'] ?>
 				};
 				if (mode != 'search') {
@@ -184,9 +233,69 @@ class PwtcMembers {
 				$.post(action, data, lookup_members_cb); 
 			}
 
+			$('.pwtc-members-search-div .search-frm').on('submit', function(evt) {
+				evt.preventDefault();
+				load_members_table('search');
+			});
+
+			$('.pwtc-members-search-div .search-frm .reset-btn').on('click', function(evt) {
+				evt.preventDefault();
+				$(".pwtc-members-search-div .search-frm input[type='text']").val(''); 
+				$('.pwtc-members-display-div').empty();
+				load_members_table('search');
+			});
+
             load_members_table('search');
 		});
 	</script>
+	<div class='pwtc-members-search-div'>
+		<ul class="accordion" data-accordion data-allow-all-closed="true">
+			<li class="accordion-item" data-accordion-item>
+				<a href="#" class="accordion-title"><i class="fa fa-search"></i> Click Here To Search</a>
+				<div class="accordion-content" data-tab-content>
+					<form class="search-frm">
+						<?php if (count($roles) == 1) { ?>
+						<input class="role" type="hidden" name="role" value="<?php echo $roles[0]; ?>"/>
+						<?php } ?>
+						<div>
+							<div class="row">
+								<div class="small-12 medium-4 columns">
+                        			<label>Email
+										<input type="text" name="email"/>
+                        			</label>
+                    			</div>
+								<div class="small-12 medium-4 columns">
+                        			<label>Last Name
+										<input type="text" name="last_name"/>
+                        			</label>
+                    			</div>
+								<div class="small-12 medium-4 columns">
+                        			<label>First Name
+										<input type="text" name="first_name"/>
+                        			</label>
+                    			</div>
+								<?php if (count($roles) > 1) { ?>
+								<div class="small-12 medium-4 columns">
+                                	<label>Role
+							        	<select class="role">
+										<?php foreach ( $roles as $role ) { ?>
+											<option value="<?php echo $role; ?>"><?php echo $role; ?></option>
+										<?php } ?>
+                                        </select>                                
+                                	</label>
+                            	</div>
+								<?php } ?>
+							</div>
+							<div class="row column">
+								<input class="accent button" type="submit" value="Search"/>
+								<input class="reset-btn accent button" type="button" value="Reset"/>
+							</div>
+						</div>
+					</form>
+				</div>
+			</li>
+		</ul>
+	</div>
 	<div class="pwtc-members-display-div"></div>
 	<?php
 			return ob_get_clean();
