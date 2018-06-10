@@ -169,13 +169,13 @@ class PwtcMembers {
 		jQuery(document).ready(function($) { 
 
 			function populate_members_table(members) {
-				var header = '<table><tr style="text-align: left"><th>Email</th><th>Last Name</th><th>First Name</th></tr></table>';
+				var header = '<table class="pwtc-mapdb-rwd-table"><tr><th>Email</th><th>Last Name</th><th>First Name</th></tr></table>';
 				$('.pwtc-members-display-div').append(header);
 				members.forEach(function(item) {
 					var data = '<tr userid="' + item.ID + '">' +
-					'<td><a href="#edit-user-profile" class="open_fancybox"><i class="fa fa-user"></i></a> ' + item.email + '</td>' + 
-					'<td>' + item.last_name + '</td>' +
-					'<td>' + item.first_name + '</td>' +
+					'<td data-th="Email"><a href="#edit-user-profile" class="open_fancybox"><i class="fa fa-user"></i></a> ' + item.email + '</td>' + 
+					'<td data-th="Last Name">' + item.last_name + '</td>' +
+					'<td data-th="First Name">' + item.first_name + '</td>' +
 					'</tr>';
 					$('.pwtc-members-display-div table').append(data);    
 				});
@@ -234,6 +234,7 @@ class PwtcMembers {
 					$("#edit-user-profile input[name='first_name']").val(res.first_name);
 					$("#edit-user-profile input[name='last_name']").val(res.last_name);
 					$("#edit-user-profile input[name='email']").val(res.email);
+					$('#user-profile-tabs').foundation('selectTab', 'user-profile-panel1');
 					$.fancybox.open( {href : '#edit-user-profile'} );
 				}
 			}
@@ -302,12 +303,22 @@ class PwtcMembers {
 				load_members_table('search');
 			});
 
+			$('#edit-user-profile .profile-frm').on('submit', function(evt) {
+				evt.preventDefault();
+				$.fancybox.close();
+			});
+
             load_members_table('search');
 		});
 	</script>
 	<div id="edit-user-profile" style="display: none">
-		<div class="row column"><h3>Basic Info</h3></div>
-		<form>
+		<ul class="tabs" data-tabs id="user-profile-tabs">
+  			<li class="tabs-title is-active"><a href="#user-profile-panel1">Basic Info</a></li>
+  			<li class="tabs-title"><a href="#user-profile-panel2">Membership</a></li>
+		</ul>
+		<div class="tabs-content" data-tabs-content="user-profile-tabs">
+  		<div class="tabs-panel is-active" id="user-profile-panel1">
+		<form class="profile-frm">
 			<div class="row">
 				<div class="small-6 columns">
 					<label>First Name
@@ -330,7 +341,6 @@ class PwtcMembers {
 					</label>
 				</div>
 			</div>
-			<div class="row column"><h3>Address</h3></div>
             <div class="row">
                 <div class="small-12 medium-12 columns">
                     <label>Address 
@@ -360,6 +370,11 @@ class PwtcMembers {
 				<input class="accent button" type="submit" value="Submit"/>
 			</div>
 		</form>
+		</div>
+  		<div class="tabs-panel" id="user-profile-panel2">
+    		<p>Suspendisse dictum feugiat nisl ut dapibus.  Vivamus hendrerit arcu sed erat molestie vehicula. Ut in nulla enim. Phasellus molestie magna non est bibendum non venenatis nisl tempor.  Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor.</p>
+  		</div>
+		</div>
 	</div>
 	<div class='pwtc-members-search-div'>
 		<ul class="accordion" data-accordion data-allow-all-closed="true">
@@ -372,23 +387,23 @@ class PwtcMembers {
 						<?php } ?>
 						<div>
 							<div class="row">
-								<div class="small-12 medium-4 columns">
+								<div class="small-12 medium-3 columns">
                         			<label>Email
 										<input type="text" name="email"/>
                         			</label>
                     			</div>
-								<div class="small-12 medium-4 columns">
+								<div class="small-12 medium-3 columns">
                         			<label>Last Name
 										<input type="text" name="last_name"/>
                         			</label>
                     			</div>
-								<div class="small-12 medium-4 columns">
+								<div class="small-12 medium-3 columns">
                         			<label>First Name
 										<input type="text" name="first_name"/>
                         			</label>
                     			</div>
 								<?php if (count($roles) > 1) { ?>
-								<div class="small-12 medium-4 columns">
+								<div class="small-12 medium-3 columns">
                                 	<label>Role
 							        	<select class="role">
 										<?php foreach ( $roles as $role ) { ?>
