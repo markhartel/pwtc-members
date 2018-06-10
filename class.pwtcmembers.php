@@ -16,12 +16,28 @@ class PwtcMembers {
         
 		add_action( 'wp_ajax_pwtc_members_lookup', 
             array( 'PwtcMembers', 'members_lookup_callback') );
+		add_action( 'wp_ajax_pwtc_members_fetch_profile', 
+            array( 'PwtcMembers', 'members_fetch_profile_callback') );
             
 		// Register shortcode callbacks
 		add_shortcode('pwtc_members_lookup', 
 			array( 'PwtcMembers', 'shortcode_members_lookup'));
 
     }
+
+	public static function members_fetch_profile_callback() {
+		$userid = intval($_POST['userid']);
+		$member_info = get_userdata($userid);
+        $response = array(
+			'userid' => $userid,
+			'first_name' => $member_info->first_name,
+			'last_name' => $member_info->last_name,
+			'email' => $member_info->user_email
+		);
+
+        echo wp_json_encode($response);
+        wp_die();
+	}
 
     public static function members_lookup_callback() {
 		$limit = intval($_POST['limit']);
@@ -157,11 +173,23 @@ class PwtcMembers {
 				$('.pwtc-members-display-div').append(header);
 				members.forEach(function(item) {
 					var data = '<tr userid="' + item.ID + '">' +
-					'<td><a href="#"><i class="fa fa-user"></i></a> ' + item.email + '</td>' + 
+					'<td><a href="#edit-user-profile" class="open_fancybox"><i class="fa fa-user"></i></a> ' + item.email + '</td>' + 
 					'<td>' + item.last_name + '</td>' +
 					'<td>' + item.first_name + '</td>' +
 					'</tr>';
 					$('.pwtc-members-display-div table').append(data);    
+				});
+				$('.pwtc-members-display-div table .open_fancybox').on('click', function(e) {
+					$("#edit-user-profile input[type='text']").val('');
+					var userid = $(this).parent().parent().attr('userid');
+					$("#edit-user-profile input[name='userid']").val(userid);
+					var action = "<?php echo admin_url('admin-ajax.php'); ?>";
+					var data = {
+						'action': 'pwtc_members_fetch_profile',
+						'userid': userid
+					};
+					$.post(action, data, display_user_profile_cb);
+					return false;
 				});
             }
 
@@ -195,6 +223,18 @@ class PwtcMembers {
 				}
 				else {
 					$('.pwtc-members-display-div .page-frm .next-btn').removeAttr("disabled");
+				}
+			}
+
+			function display_user_profile_cb(response) {
+				var res = JSON.parse(response);
+				if (res.error) {
+				}
+				else {
+					$("#edit-user-profile input[name='first_name']").val(res.first_name);
+					$("#edit-user-profile input[name='last_name']").val(res.last_name);
+					$("#edit-user-profile input[name='email']").val(res.email);
+					$.fancybox.open( {href : '#edit-user-profile'} );
 				}
 			}
 
@@ -265,6 +305,62 @@ class PwtcMembers {
             load_members_table('search');
 		});
 	</script>
+	<div id="edit-user-profile" style="display: none">
+		<div class="row column"><h3>Basic Info</h3></div>
+		<form>
+			<div class="row">
+				<div class="small-6 columns">
+					<label>First Name
+						<input type="text" name="first_name"/>
+					</label>
+				</div>
+				<div class="small-6 columns">
+					<label>Last Name
+						<input type="text" name="last_name"/>
+					</label>
+				</div>
+				<div class="small-12 medium-6 columns">
+					<label>Email
+						<input type="text" name="email"/>
+					</label>
+				</div>
+				<div class="small-12 medium-6 columns">
+					<label>Phone
+						<input type="text" name="phone"/>
+					</label>
+				</div>
+			</div>
+			<div class="row column"><h3>Address</h3></div>
+            <div class="row">
+                <div class="small-12 medium-12 columns">
+                    <label>Address 
+						<input type="text" name="address" />
+					</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="small-6 large-4 columns">
+                    <label>City
+                        <input type="text" name="city" />
+                    </label>
+                </div>
+                <div class="small-6 large-4 columns">
+                    <label>State
+                        <input type="text" name="state" />
+                    </label>
+                </div>
+                <div class="small-6 large-4 columns">
+                    <label>Zip
+                        <input type="text" name="zip" />
+                    </label>
+                </div>
+			</div>
+			<div class="row column">
+				<input type="hidden" name="userid"/>
+				<input class="accent button" type="submit" value="Submit"/>
+			</div>
+		</form>
+	</div>
 	<div class='pwtc-members-search-div'>
 		<ul class="accordion" data-accordion data-allow-all-closed="true">
 			<li class="accordion-item" data-accordion-item>
