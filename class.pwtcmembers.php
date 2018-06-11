@@ -343,7 +343,7 @@ class PwtcMembers {
 			</div>
             <div class="row">
                 <div class="small-12 medium-12 columns">
-                    <label>Address 
+                    <label>Street Address 
 						<input type="text" name="address" />
 					</label>
                 </div>
@@ -360,7 +360,7 @@ class PwtcMembers {
                     </label>
                 </div>
                 <div class="small-6 large-4 columns">
-                    <label>Zip
+                    <label>Zipcode
                         <input type="text" name="zip" />
                     </label>
                 </div>
@@ -372,7 +372,63 @@ class PwtcMembers {
 		</form>
 		</div>
   		<div class="tabs-panel" id="user-profile-panel2">
-    		<p>Suspendisse dictum feugiat nisl ut dapibus.  Vivamus hendrerit arcu sed erat molestie vehicula. Ut in nulla enim. Phasellus molestie magna non est bibendum non venenatis nisl tempor.  Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor.</p>
+		  	<form class="profile-frm">
+			  	<div class="row">
+					<div class="small-6 large-4 columns">
+						<label>Date Joined
+							<input type="text" name="date_joined" />
+						</label>
+					</div>
+					<div class="small-6 large-4 columns">
+						<label>Date Updated
+							<input type="text" name="date_updated" />
+						</label>
+					</div>
+					<div class="small-6 large-4 columns">
+						<label>Date Expires
+							<input type="text" name="date_expires" />
+						</label>
+					</div>
+				</div>
+				<div class="row">
+					<div class="small-6 large-4 columns">
+						<label>Rider ID
+							<input type="text" name="rider_id" />
+						</label>
+					</div>
+					<div class="small-6 large-4 columns">
+						<label>Show in Membership Directory
+							<input type="text" name="show_in_directory" />
+						</label>
+					</div>
+					<div class="small-6 large-4 columns">
+						<label>Payment is Pending
+							<input type="text" name="payment_pending" />
+						</label>
+					</div>
+				</div>
+				<div class="row">
+					<div class="small-6 large-4 columns">
+						<label>Staff Type
+							<input type="text" name="staff_type" />
+						</label>
+					</div>
+					<div class="small-6 large-4 columns">
+						<label>Staff Elected
+							<input type="text" name="staff_elected" />
+						</label>
+					</div>
+					<div class="small-6 large-4 columns">
+						<label>Staff Position
+							<input type="text" name="staff_position" />
+						</label>
+					</div>
+				</div>
+				<div class="row column">
+					<input type="hidden" name="userid"/>
+					<input class="accent button" type="submit" value="Submit"/>
+				</div>
+			</form>
   		</div>
 		</div>
 	</div>
