@@ -15,7 +15,10 @@ class PwtcMembers {
     
 	// Initializes plugin WordPress hooks.
 	private static function init_hooks() {
-        self::$initiated = true;
+		self::$initiated = true;
+		
+		add_action( 'template_redirect', 
+			array( 'PwtcMembers', 'download_user_list' ) );
         
 		add_action( 'wp_ajax_pwtc_members_lookup', 
             array( 'PwtcMembers', 'members_lookup_callback') );
@@ -25,8 +28,66 @@ class PwtcMembers {
 		// Register shortcode callbacks
 		add_shortcode('pwtc_members_lookup', 
 			array( 'PwtcMembers', 'shortcode_members_lookup'));
+		add_shortcode('pwtc_members_download', 
+			array( 'PwtcMembers', 'shortcode_members_download'));
 
-    }
+	}
+	
+	public static function download_user_list() {
+		//self::write_log('In download_user_list');
+		if (current_user_can(self::VIEW_MEMBERS_CAP)) {
+			//self::write_log('Past current_user_can');
+			if (isset($_POST['pwtc-members-download']) and isset($_POST['role']) and isset($_POST['name'])) {
+				//self::write_log('Post argument verified');
+				$query_args = [
+					'meta_key' => 'last_name',
+					'orderby' => 'meta_value',
+					'order' => 'ASC'
+				];
+
+				$name = $_POST['name'];
+
+				$role = $_POST['role'];
+				if ($role != 'all') {
+					$query_args['role'] = $role;
+				}
+
+				//self::write_log($query_args);
+
+				header('Content-Description: File Transfer');
+				header("Content-type: text/txt");
+				header("Content-Disposition: attachment; filename=test.txt");
+				echo 'This is a test.';
+
+/*
+				$today = date('Y-m-d', current_time('timestamp'));
+				header('Content-Description: File Transfer');
+				header("Content-type: text/csv");
+				header("Content-Disposition: attachment; filename={$today}_{$name}.csv");
+				//self::write_log('Past header write');
+				$fp = fopen('php://output', 'w');
+				//self::write_log('Past fopen');
+				fputcsv($fp, ['Email', 'Last Name', 'First Name']);
+				//self::write_log('Past fputcsv header write');
+				$user_query = new WP_User_Query( $query_args );
+				//self::write_log('Past WP_User_Query');
+				$members = $user_query->get_results();
+				//self::write_log($members);
+				if ( !empty($members) ) {
+					foreach ( $members as $member ) {
+						$member_info = get_userdata($member->ID);
+						//self::write_log($member_info);
+						fputcsv($fp, [$member_info->user_email, $member_info->last_name, $member_info->first_name]);
+					}
+				}
+
+				fclose($fp);
+				//self::write_log('Past fclose');
+*/
+				die;
+			}
+		}
+	}
 
 	public static function members_fetch_profile_callback() {
 		$userid = intval($_POST['userid']);
@@ -107,7 +168,8 @@ class PwtcMembers {
                     'ID' => $member->ID,
                     'first_name' => $member_info->first_name,
                     'last_name' => $member_info->last_name,
-                    'email' => $member_info->user_email
+					'email' => $member_info->user_email,
+					'phone' => ''
                 ];
             }
 		}
@@ -174,7 +236,7 @@ class PwtcMembers {
 		jQuery(document).ready(function($) { 
 
 			function populate_members_table(members) {
-				var header = '<table class="pwtc-mapdb-rwd-table"><tr><th>Email</th><th>Last Name</th><th>First Name</th></tr></table>';
+				var header = '<table class="pwtc-mapdb-rwd-table"><tr><th>Email</th><th>Last Name</th><th>First Name</th><th>Phone</th></tr></table>';
 				$('.pwtc-members-display-div').append(header);
 				members.forEach(function(item) {
 					var data = '<tr userid="' + item.ID + '">' +
@@ -185,6 +247,7 @@ class PwtcMembers {
 					item.email + '</td>' + 
 					'<td data-th="Last Name">' + item.last_name + '</td>' +
 					'<td data-th="First Name">' + item.first_name + '</td>' +
+					'<td data-th="Phone">' + item.phone + '</td>' +
 					'</tr>';
 					$('.pwtc-members-display-div table').append(data);    
 				});
@@ -502,6 +565,42 @@ class PwtcMembers {
 		</ul>
 	</div>
 	<div class="pwtc-members-display-div"></div>
+	<?php
+			return ob_get_clean();
+		}
+	}
+
+	// Generates the [pwtc_members_download] shortcode.
+	public static function shortcode_members_download($atts) {
+		$a = shortcode_atts(array('role' => 'all', 'name' => 'unnamed', 'label' => 'Unlabeled', 'type' => 'csv'), $atts);
+		$current_user = wp_get_current_user();
+		if ( 0 == $current_user->ID ) {
+			return 'Please log in to download the membership directory.';
+		}
+		else if (current_user_can(self::VIEW_MEMBERS_CAP) == false) {
+			return 'You are not allowed to download the membership directory.';
+		}
+		else {
+			ob_start();
+	?>
+	<script type="text/javascript">
+		jQuery(document).ready(function($) { 
+			$('.pwtc-members-download-btn a').on('click', function(e) {
+        		e.preventDefault();
+				//$('.pwtc-members-download-btn form').submit();
+				$(this).parent().find('form').submit();
+			});
+		});
+	</script>
+	<div class="pwtc-members-download-btn">
+		<a href="#" class="button"><i class="fa fa-download"></i> <?php echo $a['label']; ?></a>
+		<form method="post">
+			<input type="hidden" name="pwtc-members-download" value="yes"/>
+			<input type="hidden" name="role" value="<?php echo $a['role']; ?>"/>
+			<input type="hidden" name="type" value="<?php echo $a['type']; ?>"/>
+			<input type="hidden" name="name" value="<?php echo $a['name']; ?>"/>
+		</form>
+	</div>
 	<?php
 			return ob_get_clean();
 		}
