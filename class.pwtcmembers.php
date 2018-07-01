@@ -236,17 +236,17 @@ class PwtcMembers {
 		jQuery(document).ready(function($) { 
 
 			function populate_members_table(members) {
-				var header = '<table class="pwtc-mapdb-rwd-table"><tr><th>Email</th><th>Last Name</th><th>First Name</th><th>Phone</th></tr></table>';
+				var header = '<table class="pwtc-mapdb-rwd-table"><tr><th>Last Name</th><th>First Name</th><th>Email</th><th>Phone</th></tr></table>';
 				$('.pwtc-members-display-div').append(header);
 				members.forEach(function(item) {
 					var data = '<tr userid="' + item.ID + '">' +
-					'<td data-th="Email">' +
+					'<td data-th="Last Name">' +
 					<?php if ($can_view or $can_edit) { ?>
 					'<a href="#"><i class="fa fa-user"></i></a> ' + 
 					<?php } ?>
-					item.email + '</td>' + 
-					'<td data-th="Last Name">' + item.last_name + '</td>' +
+					item.last_name + '</td>' + 
 					'<td data-th="First Name">' + item.first_name + '</td>' +
+					'<td data-th="Email">' + item.email + '</td>' +
 					'<td data-th="Phone">' + item.phone + '</td>' +
 					'</tr>';
 					$('.pwtc-members-display-div table').append(data);    
@@ -394,6 +394,7 @@ class PwtcMembers {
 		<ul class="tabs" data-tabs id="user-profile-tabs">
   			<li class="tabs-title is-active"><a href="#user-profile-panel1">Basic Info</a></li>
   			<li class="tabs-title"><a href="#user-profile-panel2">Membership</a></li>
+  			<li class="tabs-title"><a href="#user-profile-panel3">Ride Leader</a></li>
 		</ul>
 		<div class="tabs-content" data-tabs-content="user-profile-tabs">
 			<div class="tabs-panel is-active" id="user-profile-panel1">
@@ -479,29 +480,98 @@ class PwtcMembers {
 						</div>
 						<div class="small-6 large-4 columns">
 							<label>Show in Membership Directory
-								<input type="text" name="show_in_directory" />
+								<select>
+									<option value="no" selected>No</option>
+									<option value="yes">Yes</option>
+								</select>
 							</label>
 						</div>
 						<div class="small-6 large-4 columns">
 							<label>Payment is Pending
-								<input type="text" name="payment_pending" />
+								<select>
+									<option value="no" selected>No</option>
+									<option value="yes">Yes</option>
+								</select>
 							</label>
 						</div>
 					</div>
 					<div class="row">
 						<div class="small-6 large-4 columns">
-							<label>Staff Type
-								<input type="text" name="staff_type" />
+							<label>Elected Position
+								<select>
+									<option value="no" selected>No</option>
+									<option value="President">President</option>
+									<option value="Vice President">Vice President</option>
+									<option value="Membership Secretary">Membership Secretary</option>
+									<option value="Recording Secretary">Recording Secretary</option>
+									<option value="Treasurer">Treasurer</option>
+									<option value="Road Captain (Jan-Dec)">Road Captain (Jan-Dec)</option>
+									<option value="Road Captain (Jul-Jun)">Road Captain (Jul-Jun)</option>
+									<option value="Member at Large (Jan-Dec)">Member at Large (Jan-Dec)</option>
+									<option value="Member at Large (Jul-Jun)">Member at Large (Jul-Jun)</option>
+								</select>
 							</label>
 						</div>
 						<div class="small-6 large-4 columns">
-							<label>Staff Elected
-								<input type="text" name="staff_elected" />
+							<label>Appointed Position
+							<select>
+									<option value="no" selected>No</option>
+									<option value="Pioneer Coordinator">Pioneer Coordinator</option>
+									<option value="Historian">Historian</option>
+									<option value="Librarian">Librarian</option>
+									<option value="Program Director">Program Director</option>
+									<option value="QR Reporter">QR Reporter</option>
+									<option value="Raffle Coordinator">Raffle Coordinator</option>
+									<option value="Statistician">Statistician</option>
+									<option value="Web Master">Web Master</option>
+									<option value="Banquet">Banquet</option>
+									<option value="Helmet Committee">Helmet Committee</option>
+									<option value="Boxes and Bob">Boxes and Bob</option>
+								</select>
 							</label>
 						</div>
 						<div class="small-6 large-4 columns">
-							<label>Staff Position
-								<input type="text" name="staff_position" />
+							<label>Membership Type
+								<select>
+									<option value="Paid" selected>Paid</option>
+									<option value="Service">Service</option>
+									<option value="Lifetime">Lifetime</option>
+								</select>
+							</label>
+						</div>
+					</div>
+					<div class="row column">
+						<input type="hidden" name="userid"/>
+						<?php if ($can_edit) { ?>
+						<input class="accent button" type="submit" value="Submit"/>
+						<?php } ?>
+					</div>
+				</form>
+			</div>
+			<div class="tabs-panel" id="user-profile-panel3">
+				<form class="profile-frm">
+					<div class="row">
+						<div class="small-6 columns">
+							<label>Use Contact Email
+								<select>
+									<option value="no" selected>No</option>
+									<option value="yes">Yes</option>
+								</select>
+							</label>
+						</div>
+						<div class="small-6 columns">
+							<label>Contact Email
+								<input type="text" name="contact_email"/>
+							</label>
+						</div>
+						<div class="small-12 medium-6 columns">
+							<label>Contact Voice Phone
+								<input type="text" name="voice_phone"/>
+							</label>
+						</div>
+						<div class="small-12 medium-6 columns">
+							<label>Contact Text Phone
+								<input type="text" name="text_phone"/>
 							</label>
 						</div>
 					</div>
@@ -528,11 +598,6 @@ class PwtcMembers {
 						<div>
 							<div class="row">
 								<div class="small-12 medium-3 columns">
-                        			<label>Email
-										<input type="text" name="email"/>
-                        			</label>
-                    			</div>
-								<div class="small-12 medium-3 columns">
                         			<label>Last Name
 										<input type="text" name="last_name"/>
                         			</label>
@@ -540,6 +605,11 @@ class PwtcMembers {
 								<div class="small-12 medium-3 columns">
                         			<label>First Name
 										<input type="text" name="first_name"/>
+                        			</label>
+                    			</div>
+								<div class="small-12 medium-3 columns">
+                        			<label>Email
+										<input type="text" name="email"/>
                         			</label>
                     			</div>
 								<?php if (count($roles) > 1) { ?>
