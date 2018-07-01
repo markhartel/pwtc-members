@@ -236,18 +236,27 @@ class PwtcMembers {
 		jQuery(document).ready(function($) { 
 
 			function populate_members_table(members) {
-				var header = '<table class="pwtc-mapdb-rwd-table"><tr><th>Last Name</th><th>First Name</th><th>Email</th><th>Phone</th></tr></table>';
+				var header = '<table class="pwtc-mapdb-rwd-table"><tr><th>Last Name</th><th>First Name</th><th>Email</th><th>Phone</th>' +
+				<?php if ($can_view or $can_edit) { ?>
+				'<th>Actions</th>' +
+				<?php } ?>
+				'</tr></table>';
 				$('.pwtc-members-display-div').append(header);
 				members.forEach(function(item) {
 					var data = '<tr userid="' + item.ID + '">' +
-					'<td data-th="Last Name">' +
-					<?php if ($can_view or $can_edit) { ?>
-					'<a href="#"><i class="fa fa-user"></i></a> ' + 
-					<?php } ?>
-					item.last_name + '</td>' + 
+					'<td data-th="Last Name">' + item.last_name + '</td>' + 
 					'<td data-th="First Name">' + item.first_name + '</td>' +
 					'<td data-th="Email">' + item.email + '</td>' +
 					'<td data-th="Phone">' + item.phone + '</td>' +
+					<?php if ($can_view or $can_edit) { ?>
+					'<td data-th="Actions"><a href="#"' +
+					<?php if ($can_edit) { ?>
+					' title="Edit user profile."' +
+					<?php } else { ?>
+					' title="View user profile."' +
+					<?php } ?>
+					'><i class="fa fa-user"></i></a></td>' +
+					<?php } ?>
 					'</tr>';
 					$('.pwtc-members-display-div table').append(data);    
 				});
@@ -384,6 +393,8 @@ class PwtcMembers {
 				evt.preventDefault();
 				$.fancybox.close();
 			});
+			<?php } else { ?>
+			$("#edit-user-profile .profile-frm input[type='text']").attr("disabled", "disabled");
 			<?php } ?>
 
             load_members_table('search');
@@ -456,29 +467,29 @@ class PwtcMembers {
 			<div class="tabs-panel" id="user-profile-panel2">
 				<form class="profile-frm">
 					<div class="row">
-						<div class="small-6 large-4 columns">
+						<div class="small-12 large-4 columns">
 							<label>Date Joined
 								<input type="text" name="date_joined" />
 							</label>
 						</div>
-						<div class="small-6 large-4 columns">
+						<div class="small-12 large-4 columns">
 							<label>Date Updated
 								<input type="text" name="date_updated" />
 							</label>
 						</div>
-						<div class="small-6 large-4 columns">
+						<div class="small-12 large-4 columns">
 							<label>Date Expires
 								<input type="text" name="date_expires" />
 							</label>
 						</div>
 					</div>
 					<div class="row">
-						<div class="small-6 large-4 columns">
+						<div class="small-12 large-4 columns">
 							<label>Rider ID
 								<input type="text" name="rider_id" />
 							</label>
 						</div>
-						<div class="small-6 large-4 columns">
+						<div class="small-12 large-4 columns">
 							<label>Show in Membership Directory
 								<select>
 									<option value="no" selected>No</option>
@@ -486,7 +497,7 @@ class PwtcMembers {
 								</select>
 							</label>
 						</div>
-						<div class="small-6 large-4 columns">
+						<div class="small-12 large-4 columns">
 							<label>Payment is Pending
 								<select>
 									<option value="no" selected>No</option>
@@ -496,10 +507,10 @@ class PwtcMembers {
 						</div>
 					</div>
 					<div class="row">
-						<div class="small-6 large-4 columns">
+						<div class="small-12 large-4 columns">
 							<label>Elected Position
 								<select>
-									<option value="no" selected>No</option>
+									<option value="none" selected>None</option>
 									<option value="President">President</option>
 									<option value="Vice President">Vice President</option>
 									<option value="Membership Secretary">Membership Secretary</option>
@@ -512,10 +523,10 @@ class PwtcMembers {
 								</select>
 							</label>
 						</div>
-						<div class="small-6 large-4 columns">
+						<div class="small-12 large-4 columns">
 							<label>Appointed Position
 							<select>
-									<option value="no" selected>No</option>
+									<option value="none" selected>None</option>
 									<option value="Pioneer Coordinator">Pioneer Coordinator</option>
 									<option value="Historian">Historian</option>
 									<option value="Librarian">Librarian</option>
@@ -530,7 +541,7 @@ class PwtcMembers {
 								</select>
 							</label>
 						</div>
-						<div class="small-6 large-4 columns">
+						<div class="small-12 large-4 columns">
 							<label>Membership Type
 								<select>
 									<option value="Paid" selected>Paid</option>
@@ -551,15 +562,15 @@ class PwtcMembers {
 			<div class="tabs-panel" id="user-profile-panel3">
 				<form class="profile-frm">
 					<div class="row">
-						<div class="small-6 columns">
+						<div class="small-12 medium-6 columns">
 							<label>Use Contact Email
 								<select>
-									<option value="no" selected>No</option>
+									<option value="no" selected>No, use account email</option>
 									<option value="yes">Yes</option>
 								</select>
 							</label>
 						</div>
-						<div class="small-6 columns">
+						<div class="small-12 medium-6 columns">
 							<label>Contact Email
 								<input type="text" name="contact_email"/>
 							</label>
@@ -705,6 +716,11 @@ class PwtcMembers {
 			$ms->add_cap(self::EDIT_MEMBERS_CAP);
 			self::write_log('PWTC Members plugin added capabilities to membership_secretary role');
 		} 
+		$captain = get_role('ride_captain'); 
+		if ($captain !== null) {
+			$captain->add_cap(self::VIEW_MEMBERS_CAP);
+			pwtc_mileage_write_log('PWTC Members plugin added capabilities to ride_captain role');
+		} 
 	}
 
 	public static function remove_ms_role() {
@@ -722,6 +738,11 @@ class PwtcMembers {
 				self::write_log('PWTC Members plugin removed membership_secretary role');
 			}
 		}
+		$captain = get_role('ride_captain'); 
+		if ($captain !== null) {
+			$captain->remove_cap(self::VIEW_MEMBERS_CAP);
+			pwtc_mileage_write_log('PWTC Members plugin removed capabilities from ride_captain role');
+		} 
 	}	
 
     /*************************************************************/
