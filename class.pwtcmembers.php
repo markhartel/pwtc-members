@@ -146,7 +146,21 @@ class PwtcMembers {
 				$query_args['role'] = $role;
 			}
 		}
-		
+
+		if (isset($_POST['include'])) {
+			$roles = self::parse_roles2($_POST['include']);
+			if (!empty($roles)) {
+				$query_args['role__in'] = $roles;
+			}
+		}
+
+		if (isset($_POST['exclude'])) {
+			$roles = self::parse_roles2($_POST['exclude']);
+			if (!empty($roles)) {
+				$query_args['role__not_in'] = $roles;
+			}
+		}
+
 		$page_number = 1;
 		if (isset($_POST['page_number'])) {
 			$page_number = intval($_POST['page_number']);
@@ -215,6 +229,18 @@ class PwtcMembers {
 		}
 		return $roles2;
 	}
+
+	public static function parse_roles2($role_str) {
+		$roles = [];
+		if (!empty($role_str)) {
+			$tok = strtok($role_str, ",");
+			while ($tok !== false) {
+				$roles[] = $tok;
+				$tok = strtok(",");
+			}
+		}
+		return $roles;
+	}
     
 	/*************************************************************/
 	/* Shortcode report generation functions
@@ -222,7 +248,7 @@ class PwtcMembers {
  
 	// Generates the [pwtc_members_lookup] shortcode.
 	public static function shortcode_members_lookup($atts) {
-		$a = shortcode_atts(array('limit' => 10, 'roles' => 'all'), $atts);
+		$a = shortcode_atts(array('limit' => 10, 'roles' => 'all', 'include' => '', 'exclude' => ''), $atts);
 		$current_user = wp_get_current_user();
 		if ( 0 == $current_user->ID ) {
 			return 'Please log in to search the membership directory.';
@@ -355,6 +381,8 @@ class PwtcMembers {
 				var data = {
 					'action': 'pwtc_members_lookup',
 					'role': $(".pwtc-members-search-div .search-frm .role").val(),
+					'include': $(".pwtc-members-search-div .search-frm input[name='include']").val().trim(),
+					'exclude': $(".pwtc-members-search-div .search-frm input[name='exclude']").val().trim(),
 					'email': $(".pwtc-members-search-div .search-frm input[name='email']").val().trim(),
 					'last_name': $(".pwtc-members-search-div .search-frm input[name='last_name']").val().trim(),
 					'first_name': $(".pwtc-members-search-div .search-frm input[name='first_name']").val().trim(),
@@ -395,12 +423,13 @@ class PwtcMembers {
 				evt.preventDefault();
 				$.fancybox.close();
 			});
-			<?php } else if ($can_edit_leaders) { ?>
+			<?php } ?>
+			<?php if ($can_edit_leaders and !$can_edit) { ?>
 			$("#edit-user-profile .profile-frm #user-profile-panel1 input[type='text']").attr("disabled", "disabled");
 			$("#edit-user-profile .profile-frm #user-profile-panel1 select").attr("disabled", "disabled");
 			$("#edit-user-profile .profile-frm #user-profile-panel2 input[type='text']").attr("disabled", "disabled");
 			$("#edit-user-profile .profile-frm #user-profile-panel2 select").attr("disabled", "disabled");
-			<?php } else { ?>
+			<?php } else if (!$can_edit_leaders and !$can_edit) { ?>
 			$("#edit-user-profile .profile-frm input[type='text']").attr("disabled", "disabled");
 			$("#edit-user-profile .profile-frm select").attr("disabled", "disabled");
 			<?php } ?>
@@ -603,6 +632,8 @@ class PwtcMembers {
 				<a href="#" class="accordion-title"><i class="fa fa-search"></i> Click Here To Search</a>
 				<div class="accordion-content" data-tab-content>
 					<form class="search-frm">
+						<input type="hidden" name="include" value="<?php echo $a['include']; ?>"/>
+						<input type="hidden" name="exclude" value="<?php echo $a['exclude']; ?>"/>
 						<?php if (count($roles) == 1) { ?>
 						<input class="role" type="hidden" name="role" value="<?php echo $roles[0]['value']; ?>"/>
 						<?php } ?>
