@@ -140,24 +140,35 @@ class PwtcMembers {
 			$query_args['search_columns'] = array( 'user_email' );
 		}	
 		
-		if (isset($_POST['role'])) {
-			$role = $_POST['role'];
-			if ($role != 'all') {
-				$query_args['role'] = $role;
-			}
-		}
-
 		if (isset($_POST['include'])) {
-			$roles = self::parse_roles2($_POST['include']);
+			$roles = self::parse_include_exclude($_POST['include']);
 			if (!empty($roles)) {
 				$query_args['role__in'] = $roles;
 			}
 		}
 
 		if (isset($_POST['exclude'])) {
-			$roles = self::parse_roles2($_POST['exclude']);
+			$roles = self::parse_include_exclude($_POST['exclude']);
 			if (!empty($roles)) {
 				$query_args['role__not_in'] = $roles;
+			}
+		}
+
+		if (isset($_POST['role'])) {
+			$role = $_POST['role'];
+			if ($role != 'all') {
+				if (substr($role, 0, 1) === "!") {
+					$not_role = substr($role, 1, strlen($role)-1);
+					if (isset($query_args['role__not_in'])) {
+						$query_args['role__not_in'][] = $not_role;
+					}
+					else {
+						$query_args['role__not_in'] = [$not_role];
+					}
+				}
+				else {
+					$query_args['role__in'] = [$role];
+				}
 			}
 		}
 
@@ -219,18 +230,29 @@ class PwtcMembers {
 				];
 			}
 			else {
-				if (isset($wp_roles->roles[$role])) {
-					$roles2[] = [
-						'label' => $wp_roles->roles[$role]['name'],
-						'value' => $role,
-					];	
+				if (substr($role, 0, 1) === "!") {
+					$not_role = substr($role, 1, strlen($role)-1);
+					if (isset($wp_roles->roles[$not_role])) {
+						$roles2[] = [
+							'label' => 'Not ' . $wp_roles->roles[$not_role]['name'],
+							'value' => $role,
+						];	
+					}
+				}
+				else {
+					if (isset($wp_roles->roles[$role])) {
+						$roles2[] = [
+							'label' => $wp_roles->roles[$role]['name'],
+							'value' => $role,
+						];	
+					}
 				}
 			}
 		}
 		return $roles2;
 	}
 
-	public static function parse_roles2($role_str) {
+	public static function parse_include_exclude($role_str) {
 		$roles = [];
 		if (!empty($role_str)) {
 			$tok = strtok($role_str, ",");
