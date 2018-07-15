@@ -31,8 +31,8 @@ class PwtcMembers {
 		// Register shortcode callbacks
 		add_shortcode('pwtc_members_lookup', 
 			array( 'PwtcMembers', 'shortcode_members_lookup'));
-		add_shortcode('pwtc_members_download', 
-			array( 'PwtcMembers', 'shortcode_members_download'));
+//		add_shortcode('pwtc_members_download', 
+//			array( 'PwtcMembers', 'shortcode_members_download'));
 
 	}
 	
@@ -40,8 +40,9 @@ class PwtcMembers {
 		//self::write_log('In download_user_list');
 		if (current_user_can(self::VIEW_MEMBERS_CAP)) {
 			//self::write_log('Past current_user_can');
-			if (isset($_POST['pwtc-members-download']) and isset($_POST['role']) and isset($_POST['name'])) {
+			if (isset($_POST['pwtc-members-download'])) {
 				//self::write_log('Post argument verified');
+				/*
 				$query_args = [
 					'meta_key' => 'last_name',
 					'orderby' => 'meta_value',
@@ -54,6 +55,7 @@ class PwtcMembers {
 				if ($role != 'all') {
 					$query_args['role'] = $role;
 				}
+				*/
 
 				//self::write_log($query_args);
 
@@ -305,12 +307,12 @@ class PwtcMembers {
 					<?php if ($can_view or $can_edit or $can_edit_leaders or $can_delete) { ?>
 					'<td data-th="Actions">' +
 						<?php if ($can_edit or $can_edit_leaders) { ?>
-						'<a class="member-profile-a" href="#" title="Edit member profile."><i class="fa fa-address-card-o"></i></a>' +
+						'<a class="member-profile-a" title="Edit member profile."><i class="fa fa-pencil-square"></i></a> ' +
 						<?php } else if ($can_view) { ?>
-						'<a class="member-profile-a" href="#" title="View member profile."><i class="fa fa-user"></i></a>' +
+						'<a class="member-profile-a" title="View member profile."><i class="fa fa-eye"></i></a> ' +
 						<?php } ?>
 						<?php if ($can_delete) { ?>
-						'<a href="#" title="Delete member."><i class="fa fa-user-times"></i></a>' +
+						'<a class="member-delete-a" title="Delete member."><i class="fa fa-user-times"></i></a> ' +
 						<?php } ?>
 					'</td>' +
 					<?php } ?>
@@ -328,7 +330,13 @@ class PwtcMembers {
 						'userid': userid
 					};
 					$.post(action, data, display_user_profile_cb);
-					return false;
+				});
+				<?php } ?>
+				<?php if ($can_delete) { ?>
+				$('.pwtc-members-display-div table .member-delete-a').on('click', function(e) {
+					var userid = $(this).parent().parent().attr('userid');
+					$("#delete-user-profile").html('This is the popup that deletes member user ID ' + userid + '.');
+					$.fancybox.open( {href : '#delete-user-profile'} );
 				});
 				<?php } ?>
             }
@@ -409,15 +417,15 @@ class PwtcMembers {
                 var action = "<?php echo admin_url('admin-ajax.php'); ?>";
 				var data = {
 					'action': 'pwtc_members_lookup',
-					'role': $(".pwtc-members-search-div .search-frm .role").val(),
 					'include': $(".pwtc-members-search-div .search-frm input[name='include']").val().trim(),
 					'exclude': $(".pwtc-members-search-div .search-frm input[name='exclude']").val().trim(),
-					'email': $(".pwtc-members-search-div .search-frm input[name='email']").val().trim(),
-					'last_name': $(".pwtc-members-search-div .search-frm input[name='last_name']").val().trim(),
-					'first_name': $(".pwtc-members-search-div .search-frm input[name='first_name']").val().trim(),
 					'limit': <?php echo $a['limit'] ?>
 				};
 				if (mode != 'search') {
+					data.role = $(".download-frm input[name='role']").val();
+					data.email = $(".download-frm input[name='email']").val();
+					data.last_name = $(".download-frm input[name='last_name']").val();
+					data.first_name = $(".download-frm input[name='first_name']").val();
 					var pagenum = $(".pwtc-members-display-div .page-frm input[name='pagenum']").val();
 					var numpages = $(".pwtc-members-display-div .page-frm input[name='numpages']").val();
 					if (mode == 'prev') {
@@ -429,6 +437,14 @@ class PwtcMembers {
 					$('.pwtc-members-display-div .page-frm .page-msg').html('<i class="fa fa-spinner fa-pulse"></i> Loading...');
 				}
 				else {
+					data.role = $(".pwtc-members-search-div .search-frm .role").val();
+					data.email = $(".pwtc-members-search-div .search-frm input[name='email']").val().trim();
+					data.last_name = $(".pwtc-members-search-div .search-frm input[name='last_name']").val().trim();
+					data.first_name = $(".pwtc-members-search-div .search-frm input[name='first_name']").val().trim();
+					$(".download-frm input[name='role']").val(data.role);
+					$(".download-frm input[name='email']").val(data.email);
+					$(".download-frm input[name='last_name']").val(data.last_name);
+					$(".download-frm input[name='first_name']").val(data.first_name);	
 					$('.pwtc-members-display-div').html('<i class="fa fa-spinner fa-pulse"></i> Loading...');
 				}
 
@@ -469,12 +485,23 @@ class PwtcMembers {
 			});
 			<?php } ?>
 
+			<?php if ($can_view) { ?>
+			$('.download-member-a').on('click', function(e) {
+				$('.download-frm').submit();
+			});
+			<?php } ?>
+
             load_members_table('search');
 		});
 	</script>
 	<?php if ($can_add) { ?>
 	<div id="add-user-profile" style="display: none">
 		This is the popup that adds a new member.
+	</div>
+	<?php } ?>
+	<?php if ($can_delete) { ?>
+	<div id="delete-user-profile" style="display: none">
+		This is the popup that deletes a member.
 	</div>
 	<?php } ?>
 	<?php if ($can_view or $can_edit or $can_edit_leaders) { ?>
@@ -721,16 +748,26 @@ class PwtcMembers {
   		<a class="new-member-a button" title="Create new member."><i class="fa fa-user-plus"></i> New</a>
 		<?php } ?>
 		<?php if ($can_view) { ?>
-  		<a class="button" title="Download member information."><i class="fa fa-download"></i> Download</a>
+  		<a class="download-member-a button" title="Download member information."><i class="fa fa-download"></i> Download</a>
 		<?php } ?>
 	</div>
 	<div class="pwtc-members-display-div"></div>
+	<form class="download-frm">
+		<input type="hidden" name="pwtc-members-download" value="yes"/>
+		<input type="hidden" name="include" value="<?php echo $a['include']; ?>"/>
+		<input type="hidden" name="exclude" value="<?php echo $a['exclude']; ?>"/>
+		<input type="hidden" name="role" value="<?php echo $roles[0]['value']; ?>"/>
+		<input type="hidden" name="last_name" value=""/>
+		<input type="hidden" name="first_name" value=""/>
+		<input type="hidden" name="email" value=""/>
+	</form>
 	<?php
 			return ob_get_clean();
 		}
 	}
 
 	// Generates the [pwtc_members_download] shortcode.
+/*
 	public static function shortcode_members_download($atts) {
 		$a = shortcode_atts(array('role' => 'all', 'name' => 'unnamed', 'label' => 'Unlabeled', 'type' => 'csv'), $atts);
 		$current_user = wp_get_current_user();
@@ -765,6 +802,7 @@ class PwtcMembers {
 			return ob_get_clean();
 		}
 	}
+*/
 
 	/*************************************************************/
 	/* Plugin capabilities management functions.
