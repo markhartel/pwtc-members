@@ -31,67 +31,123 @@ class PwtcMembers {
 		// Register shortcode callbacks
 		add_shortcode('pwtc_members_lookup', 
 			array( 'PwtcMembers', 'shortcode_members_lookup'));
-//		add_shortcode('pwtc_members_download', 
-//			array( 'PwtcMembers', 'shortcode_members_download'));
-
 	}
 	
 	public static function download_user_list() {
-		//self::write_log('In download_user_list');
 		if (current_user_can(self::VIEW_MEMBERS_CAP)) {
-			//self::write_log('Past current_user_can');
 			if (isset($_POST['pwtc-members-download'])) {
-				//self::write_log('Post argument verified');
-				/*
-				$query_args = [
-					'meta_key' => 'last_name',
-					'orderby' => 'meta_value',
-					'order' => 'ASC'
-				];
-
-				$name = $_POST['name'];
-
-				$role = $_POST['role'];
-				if ($role != 'all') {
-					$query_args['role'] = $role;
-				}
-				*/
-
-				//self::write_log($query_args);
-
+				$query_args = self::get_query_args();
+/*
 				header('Content-Description: File Transfer');
 				header("Content-type: text/txt");
 				header("Content-Disposition: attachment; filename=test.txt");
 				echo 'This is a test.';
+*/
 
-/*
 				$today = date('Y-m-d', current_time('timestamp'));
 				header('Content-Description: File Transfer');
 				header("Content-type: text/csv");
-				header("Content-Disposition: attachment; filename={$today}_{$name}.csv");
-				//self::write_log('Past header write');
+				header("Content-Disposition: attachment; filename={$today}_members.csv");
 				$fp = fopen('php://output', 'w');
-				//self::write_log('Past fopen');
-				fputcsv($fp, ['Email', 'Last Name', 'First Name']);
-				//self::write_log('Past fputcsv header write');
+				fputcsv($fp, ['Last Name', 'First Name', 'Email']);
 				$user_query = new WP_User_Query( $query_args );
-				//self::write_log('Past WP_User_Query');
 				$members = $user_query->get_results();
-				//self::write_log($members);
 				if ( !empty($members) ) {
 					foreach ( $members as $member ) {
 						$member_info = get_userdata($member->ID);
-						//self::write_log($member_info);
-						fputcsv($fp, [$member_info->user_email, $member_info->last_name, $member_info->first_name]);
+						fputcsv($fp, [$member_info->last_name, $member_info->first_name, $member_info->user_email]);
 					}
 				}
 
 				fclose($fp);
-				//self::write_log('Past fclose');
-*/
 				die;
 			}
 		}
+	}
+
+	public static function get_query_args() {
+        $query_args = [
+            'meta_key' => 'last_name',
+            'orderby' => 'meta_value',
+            'order' => 'ASC'
+		];
+
+		if (isset($_POST['first_name'])) {
+			if (!isset($query_args['meta_query'])) {
+				$query_args['meta_query'] = [];
+			}
+			$query_args['meta_query'][] = [
+				'key'     => 'first_name',
+				'value'   => $_POST['first_name'],
+				'compare' => 'LIKE'   
+			];
+		}
+
+		if (isset($_POST['last_name'])) {
+			if (!isset($query_args['meta_query'])) {
+				$query_args['meta_query'] = [];
+			}
+			$query_args['meta_query'][] = [
+				'key'     => 'last_name',
+				'value'   => $_POST['last_name'],
+				'compare' => 'LIKE'   
+			];
+		}
+
+		if (isset($_POST['email'])) {
+			$query_args['search'] = '*' . esc_attr($_POST['email']) . '*';
+			$query_args['search_columns'] = array( 'user_email' );
+		}	
+		
+		if (isset($_POST['include'])) {
+			$roles = self::parse_include_exclude($_POST['include']);
+			if (!empty($roles)) {
+				$query_args['role__in'] = $roles;
+			}
+		}
+
+		if (isset($_POST['exclude'])) {
+			$roles = self::parse_include_exclude($_POST['exclude']);
+			if (!empty($roles)) {
+				$query_args['role__not_in'] = $roles;
+			}
+		}
+
+		if (isset($_POST['role'])) {
+			$role = $_POST['role'];
+			if ($role != 'all') {
+				if (substr($role, 0, 1) === "!") {
+					$not_role = substr($role, 1, strlen($role)-1);
+					if (isset($query_args['role__not_in'])) {
+						$query_args['role__not_in'][] = $not_role;
+					}
+					else {
+						$query_args['role__not_in'] = [$not_role];
+					}
+				}
+				else {
+					$query_args['role__in'] = [$role];
+				}
+			}
+		}
+
+		if (isset($_POST['limit'])) {
+			$limit = intval($_POST['limit']);
+			$query_args['number'] = $limit;
+			$page_number = 1;
+			if (isset($_POST['page_number'])) {
+				$page_number = intval($_POST['page_number']);
+			}
+			if ($page_number == 1) {
+				$offset = 0;  
+			}
+			else {
+				$offset = ($page_number-1)*$limit;
+			}
+			$query_args['offset'] = $offset;
+		}
+
+		return $query_args;
 	}
 
 	public static function members_fetch_profile_callback() {
@@ -109,7 +165,11 @@ class PwtcMembers {
 	}
 
     public static function members_lookup_callback() {
+		$query_args = self::get_query_args();
+
 		$limit = intval($_POST['limit']);
+		$query_args['number'] = $limit;
+/*
         $query_args = [
             'meta_key' => 'last_name',
             'orderby' => 'meta_value',
@@ -175,7 +235,7 @@ class PwtcMembers {
 				}
 			}
 		}
-
+*/
 		$page_number = 1;
 		if (isset($_POST['page_number'])) {
 			$page_number = intval($_POST['page_number']);
@@ -752,7 +812,7 @@ class PwtcMembers {
 		<?php } ?>
 	</div>
 	<div class="pwtc-members-display-div"></div>
-	<form class="download-frm">
+	<form class="download-frm" method="post">
 		<input type="hidden" name="pwtc-members-download" value="yes"/>
 		<input type="hidden" name="include" value="<?php echo $a['include']; ?>"/>
 		<input type="hidden" name="exclude" value="<?php echo $a['exclude']; ?>"/>
