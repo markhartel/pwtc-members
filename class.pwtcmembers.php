@@ -25,6 +25,8 @@ class PwtcMembers {
         
 		add_action( 'wp_ajax_pwtc_members_lookup', 
             array( 'PwtcMembers', 'members_lookup_callback') );
+		add_action( 'wp_ajax_pwtc_members_update', 
+            array( 'PwtcMembers', 'members_update_callback') );
 		add_action( 'wp_ajax_pwtc_members_fetch_profile', 
             array( 'PwtcMembers', 'members_fetch_profile_callback') );
             
@@ -37,13 +39,6 @@ class PwtcMembers {
 		if (current_user_can(self::VIEW_MEMBERS_CAP)) {
 			if (isset($_POST['pwtc-members-download'])) {
 				$query_args = self::get_query_args();
-/*
-				header('Content-Description: File Transfer');
-				header("Content-type: text/txt");
-				header("Content-Disposition: attachment; filename=test.txt");
-				echo 'This is a test.';
-*/
-
 				$today = date('Y-m-d', current_time('timestamp'));
 				header('Content-Description: File Transfer');
 				header("Content-type: text/csv");
@@ -131,22 +126,6 @@ class PwtcMembers {
 			}
 		}
 
-		if (isset($_POST['limit'])) {
-			$limit = intval($_POST['limit']);
-			$query_args['number'] = $limit;
-			$page_number = 1;
-			if (isset($_POST['page_number'])) {
-				$page_number = intval($_POST['page_number']);
-			}
-			if ($page_number == 1) {
-				$offset = 0;  
-			}
-			else {
-				$offset = ($page_number-1)*$limit;
-			}
-			$query_args['offset'] = $offset;
-		}
-
 		return $query_args;
 	}
 
@@ -164,78 +143,23 @@ class PwtcMembers {
         wp_die();
 	}
 
+	public static function members_update_callback() {
+		$userid = intval($_POST['userid']);
+        $response = array(
+			'userid' => $userid,
+			'error' => 'Cannot update user ID ' . $userid . ', not implemented!'
+		);
+
+        echo wp_json_encode($response);
+        wp_die();
+	}
+
     public static function members_lookup_callback() {
 		$query_args = self::get_query_args();
 
 		$limit = intval($_POST['limit']);
 		$query_args['number'] = $limit;
-/*
-        $query_args = [
-            'meta_key' => 'last_name',
-            'orderby' => 'meta_value',
-            'order' => 'ASC',
-            'number' => $limit
-		];
 
-		if (isset($_POST['first_name'])) {
-			if (!isset($query_args['meta_query'])) {
-				$query_args['meta_query'] = [];
-			}
-			$query_args['meta_query'][] = [
-				'key'     => 'first_name',
-				'value'   => $_POST['first_name'],
-				'compare' => 'LIKE'   
-			];
-		}
-
-		if (isset($_POST['last_name'])) {
-			if (!isset($query_args['meta_query'])) {
-				$query_args['meta_query'] = [];
-			}
-			$query_args['meta_query'][] = [
-				'key'     => 'last_name',
-				'value'   => $_POST['last_name'],
-				'compare' => 'LIKE'   
-			];
-		}
-
-		if (isset($_POST['email'])) {
-			$query_args['search'] = '*' . esc_attr($_POST['email']) . '*';
-			$query_args['search_columns'] = array( 'user_email' );
-		}	
-		
-		if (isset($_POST['include'])) {
-			$roles = self::parse_include_exclude($_POST['include']);
-			if (!empty($roles)) {
-				$query_args['role__in'] = $roles;
-			}
-		}
-
-		if (isset($_POST['exclude'])) {
-			$roles = self::parse_include_exclude($_POST['exclude']);
-			if (!empty($roles)) {
-				$query_args['role__not_in'] = $roles;
-			}
-		}
-
-		if (isset($_POST['role'])) {
-			$role = $_POST['role'];
-			if ($role != 'all') {
-				if (substr($role, 0, 1) === "!") {
-					$not_role = substr($role, 1, strlen($role)-1);
-					if (isset($query_args['role__not_in'])) {
-						$query_args['role__not_in'][] = $not_role;
-					}
-					else {
-						$query_args['role__not_in'] = [$not_role];
-					}
-				}
-				else {
-					$query_args['role__in'] = [$role];
-				}
-			}
-		}
-*/
 		$page_number = 1;
 		if (isset($_POST['page_number'])) {
 			$page_number = intval($_POST['page_number']);
@@ -443,8 +367,20 @@ class PwtcMembers {
 					$("#edit-user-profile input[name='first_name']").val(res.first_name);
 					$("#edit-user-profile input[name='last_name']").val(res.last_name);
 					$("#edit-user-profile input[name='email']").val(res.email);
+					$("#edit-user-profile .status_msg").html('');
+					//$("#edit-user-profile .status_msg").html('<div class="callout small"><p>Status message area</p></div>');
 					$('#user-profile-tabs').foundation('selectTab', 'user-profile-panel1');
 					$.fancybox.open( {href : '#edit-user-profile'} );
+				}
+			}
+
+			function update_user_profile_cb(response) {
+				var res = JSON.parse(response);
+				if (res.error) {
+					$("#edit-user-profile .status_msg").html('<div class="callout small alert"><p>' + res.error + '</p></div>');
+				}
+				else {
+					$.fancybox.close();
 				}
 			}
 			<?php } ?>
@@ -526,7 +462,16 @@ class PwtcMembers {
 			<?php if ($can_edit or $can_edit_leaders) { ?>
 			$('#edit-user-profile .profile-frm').on('submit', function(evt) {
 				evt.preventDefault();
-				$.fancybox.close();
+				//$.fancybox.close();
+
+				var userid = $("#edit-user-profile input[name='userid']").val();
+				var action = "<?php echo admin_url('admin-ajax.php'); ?>";
+				var data = {
+					'action': 'pwtc_members_update',
+					'userid': userid
+				};
+				$.post(action, data, update_user_profile_cb);
+				
 			});
 			<?php } ?>
 			<?php if ($can_edit_leaders and !$can_edit) { ?>
@@ -744,6 +689,7 @@ class PwtcMembers {
 					</div>
 				</div>
 			</div>
+			<div class="status_msg"></div>
 			<div class="row column">
 				<input type="hidden" name="userid"/>
 				<?php if ($can_edit or $can_edit_leaders) { ?>
@@ -825,44 +771,6 @@ class PwtcMembers {
 			return ob_get_clean();
 		}
 	}
-
-	// Generates the [pwtc_members_download] shortcode.
-/*
-	public static function shortcode_members_download($atts) {
-		$a = shortcode_atts(array('role' => 'all', 'name' => 'unnamed', 'label' => 'Unlabeled', 'type' => 'csv'), $atts);
-		$current_user = wp_get_current_user();
-		if ( 0 == $current_user->ID ) {
-			return 'Please log in to download the membership directory.';
-		}
-		else if (current_user_can(self::VIEW_MEMBERS_CAP) == false) {
-			return 'You are not allowed to download the membership directory.';
-		}
-		else {
-			ob_start();
-	?>
-	<script type="text/javascript">
-		jQuery(document).ready(function($) { 
-			$('.pwtc-members-download-btn a').on('click', function(e) {
-        		e.preventDefault();
-				//$('.pwtc-members-download-btn form').submit();
-				$(this).parent().find('form').submit();
-			});
-		});
-	</script>
-	<div class="pwtc-members-download-btn">
-		<a href="#" class="button"><i class="fa fa-download"></i> <?php echo $a['label']; ?></a>
-		<form method="post">
-			<input type="hidden" name="pwtc-members-download" value="yes"/>
-			<input type="hidden" name="role" value="<?php echo $a['role']; ?>"/>
-			<input type="hidden" name="type" value="<?php echo $a['type']; ?>"/>
-			<input type="hidden" name="name" value="<?php echo $a['name']; ?>"/>
-		</form>
-	</div>
-	<?php
-			return ob_get_clean();
-		}
-	}
-*/
 
 	/*************************************************************/
 	/* Plugin capabilities management functions.
