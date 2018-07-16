@@ -27,6 +27,8 @@ class PwtcMembers {
             array( 'PwtcMembers', 'members_lookup_callback') );
 		add_action( 'wp_ajax_pwtc_members_update', 
             array( 'PwtcMembers', 'members_update_callback') );
+		add_action( 'wp_ajax_pwtc_members_add', 
+            array( 'PwtcMembers', 'members_add_callback') );
 		add_action( 'wp_ajax_pwtc_members_fetch_profile', 
             array( 'PwtcMembers', 'members_fetch_profile_callback') );
             
@@ -148,6 +150,15 @@ class PwtcMembers {
         $response = array(
 			'userid' => $userid,
 			'error' => 'Cannot update user ID ' . $userid . ', not implemented!'
+		);
+
+        echo wp_json_encode($response);
+        wp_die();
+	}
+
+	public static function members_add_callback() {
+        $response = array(
+			'error' => 'Cannot add new member, not implemented!'
 		);
 
         echo wp_json_encode($response);
@@ -368,7 +379,6 @@ class PwtcMembers {
 					$("#edit-user-profile input[name='last_name']").val(res.last_name);
 					$("#edit-user-profile input[name='email']").val(res.email);
 					$("#edit-user-profile .status_msg").html('');
-					//$("#edit-user-profile .status_msg").html('<div class="callout small"><p>Status message area</p></div>');
 					$('#user-profile-tabs').foundation('selectTab', 'user-profile-panel1');
 					$.fancybox.open( {href : '#edit-user-profile'} );
 				}
@@ -378,6 +388,18 @@ class PwtcMembers {
 				var res = JSON.parse(response);
 				if (res.error) {
 					$("#edit-user-profile .status_msg").html('<div class="callout small alert"><p>' + res.error + '</p></div>');
+				}
+				else {
+					$.fancybox.close();
+				}
+			}
+			<?php } ?>
+
+			<?php if ($can_add) { ?>
+			function add_user_profile_cb(response) {
+				var res = JSON.parse(response);
+				if (res.error) {
+					$("#add-user-profile .status_msg").html('<div class="callout small alert"><p>' + res.error + '</p></div>');
 				}
 				else {
 					$.fancybox.close();
@@ -459,11 +481,20 @@ class PwtcMembers {
 				load_members_table('search');
 			});
 
+			<?php if ($can_add) { ?>
+			$('#add-user-profile .profile-frm').on('submit', function(evt) {
+				evt.preventDefault();
+				var action = "<?php echo admin_url('admin-ajax.php'); ?>";
+				var data = {
+					'action': 'pwtc_members_add'
+				};
+				$.post(action, data, add_user_profile_cb);
+			});
+			<?php } ?>
+
 			<?php if ($can_edit or $can_edit_leaders) { ?>
 			$('#edit-user-profile .profile-frm').on('submit', function(evt) {
 				evt.preventDefault();
-				//$.fancybox.close();
-
 				var userid = $("#edit-user-profile input[name='userid']").val();
 				var action = "<?php echo admin_url('admin-ajax.php'); ?>";
 				var data = {
@@ -486,6 +517,7 @@ class PwtcMembers {
 
 			<?php if ($can_add) { ?>
 			$('.new-member-a').on('click', function(e) {
+				$("#add-user-profile .status_msg").html('');
 				$.fancybox.open( {href : '#add-user-profile'} );
 			});
 			<?php } ?>
@@ -501,7 +533,76 @@ class PwtcMembers {
 	</script>
 	<?php if ($can_add) { ?>
 	<div id="add-user-profile" style="display: none">
-		This is the popup that adds a new member.
+		<form class="profile-frm">
+			<div class="row">
+				<div class="small-6 columns">
+					<label>First Name
+						<input type="text" name="first_name"/>
+					</label>
+				</div>
+				<div class="small-6 columns">
+					<label>Last Name
+						<input type="text" name="last_name"/>
+					</label>
+				</div>
+				<div class="small-12 medium-6 columns">
+					<label>Email
+						<input type="text" name="email"/>
+					</label>
+				</div>
+				<div class="small-12 medium-6 columns">
+					<label>Phone
+						<input type="text" name="phone"/>
+					</label>
+				</div>
+			</div>
+			<div class="row">
+				<div class="small-12 medium-12 columns">
+					<label>Street Address 
+						<input type="text" name="address" />
+					</label>
+				</div>
+			</div>
+			<div class="row">
+				<div class="small-6 large-4 columns">
+					<label>City
+						<input type="text" name="city" />
+					</label>
+				</div>
+				<div class="small-6 large-4 columns">
+					<label>State
+						<input type="text" name="state" />
+					</label>
+				</div>
+				<div class="small-6 large-4 columns">
+					<label>Zipcode
+						<input type="text" name="zip" />
+					</label>
+				</div>
+			</div>
+			<div class="row">
+				<div class="small-12 large-4 columns">
+					<label>Show in Membership Directory
+						<select>
+							<option value="no" selected>No</option>
+							<option value="yes">Yes</option>
+						</select>
+					</label>
+				</div>
+				<div class="small-12 large-4 columns">
+					<label>Membership Type
+						<select>
+							<option value="Paid 1 Year" selected>Paid 1 Year</option>
+							<option value="Paid 2 Year">Paid 2 Year</option>
+						</select>
+					</label>
+				</div>
+			</div>
+			<div class="status_msg"></div>
+			<div class="row column">
+				<input class="accent button" type="submit" value="Submit"/>
+			</div>
+		</form>
 	</div>
 	<?php } ?>
 	<?php if ($can_delete) { ?>
@@ -645,7 +746,8 @@ class PwtcMembers {
 						<div class="small-12 large-4 columns">
 							<label>Membership Type
 								<select>
-									<option value="Paid" selected>Paid</option>
+									<option value="Paid 1 Year" selected>Paid 1 Year</option>
+									<option value="Paid 2 Year">Paid 2 Year</option>
 									<option value="Service">Service</option>
 									<option value="Lifetime">Lifetime</option>
 								</select>
