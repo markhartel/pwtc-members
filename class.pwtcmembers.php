@@ -29,6 +29,8 @@ class PwtcMembers {
             array( 'PwtcMembers', 'members_update_callback') );
 		add_action( 'wp_ajax_pwtc_members_add', 
             array( 'PwtcMembers', 'members_add_callback') );
+		add_action( 'wp_ajax_pwtc_members_delete', 
+            array( 'PwtcMembers', 'members_delete_callback') );
 		add_action( 'wp_ajax_pwtc_members_fetch_profile', 
             array( 'PwtcMembers', 'members_fetch_profile_callback') );
             
@@ -165,6 +167,15 @@ class PwtcMembers {
         wp_die();
 	}
 
+	public static function members_delete_callback() {
+        $response = array(
+			'error' => 'Cannot delete member, not implemented!'
+		);
+
+        echo wp_json_encode($response);
+        wp_die();
+	}
+
     public static function members_lookup_callback() {
 		$query_args = self::get_query_args();
 
@@ -294,7 +305,7 @@ class PwtcMembers {
 				'</tr></table>';
 				$('.pwtc-members-display-div').append(header);
 				members.forEach(function(item) {
-					var data = '<tr userid="' + item.ID + '">' +
+					var data = '<tr userid="' + item.ID + '" username="' + item.first_name + ' ' + item.last_name + '">' +
 					'<td data-th="Last Name">' + item.last_name + '</td>' + 
 					'<td data-th="First Name">' + item.first_name + '</td>' +
 					'<td data-th="Email">' + item.email + '</td>' +
@@ -330,7 +341,10 @@ class PwtcMembers {
 				<?php if ($can_delete) { ?>
 				$('.pwtc-members-display-div table .member-delete-a').on('click', function(e) {
 					var userid = $(this).parent().parent().attr('userid');
-					$("#delete-user-profile").html('This is the popup that deletes member user ID ' + userid + '.');
+					var name = $(this).parent().parent().attr('username');
+					$("#delete-user-profile input[name='userid']").val(userid);
+					$("#delete-user-profile .profile-frm .status_msg").html('');
+					$("#delete-user-profile .profile-frm .callout p").html('Are you sure you want to delete member ' + name + ' (ID ' + userid + ')?');
 					$.fancybox.open( {href : '#delete-user-profile'} );
 				});
 				<?php } ?>
@@ -400,6 +414,18 @@ class PwtcMembers {
 				var res = JSON.parse(response);
 				if (res.error) {
 					$("#add-user-profile .status_msg").html('<div class="callout small alert"><p>' + res.error + '</p></div>');
+				}
+				else {
+					$.fancybox.close();
+				}
+			}
+			<?php } ?>
+
+			<?php if ($can_delete) { ?>
+			function delete_user_profile_cb(response) {
+				var res = JSON.parse(response);
+				if (res.error) {
+					$("#delete-user-profile .status_msg").html('<div class="callout small alert"><p>' + res.error + '</p></div>');
 				}
 				else {
 					$.fancybox.close();
@@ -489,6 +515,19 @@ class PwtcMembers {
 					'action': 'pwtc_members_add'
 				};
 				$.post(action, data, add_user_profile_cb);
+			});
+			<?php } ?>
+
+			<?php if ($can_delete) { ?>
+			$('#delete-user-profile .profile-frm').on('submit', function(evt) {
+				evt.preventDefault();
+				var userid = $("#delete-user-profile input[name='userid']").val();
+				var action = "<?php echo admin_url('admin-ajax.php'); ?>";
+				var data = {
+					'action': 'pwtc_members_delete',
+					'userid': userid
+				};
+				$.post(action, data, delete_user_profile_cb);
 			});
 			<?php } ?>
 
@@ -598,8 +637,9 @@ class PwtcMembers {
 					</label>
 				</div>
 			</div>
-			<div class="status_msg"></div>
+			<div class="status_msg row column"></div>
 			<div class="row column">
+				<input type="hidden" name="userid"/>
 				<input class="accent button" type="submit" value="Submit"/>
 			</div>
 		</form>
@@ -607,12 +647,22 @@ class PwtcMembers {
 	<?php } ?>
 	<?php if ($can_delete) { ?>
 	<div id="delete-user-profile" style="display: none">
-		This is the popup that deletes a member.
+		<form class="profile-frm">
+		    <div class="row column">
+				<div class="callout warning"><p></p></div>
+			</div>
+			<div class="status_msg row column"></div>
+			<div class="row column">
+				<input type="hidden" name="userid"/>
+				<input class="accent button" type="submit" value="Submit"/>
+			</div>
+		</form>
 	</div>
 	<?php } ?>
 	<?php if ($can_view or $can_edit or $can_edit_leaders) { ?>
 	<div id="edit-user-profile" style="display: none">
 		<form class="profile-frm">
+		    <div class="row column">
 			<ul class="tabs" data-tabs id="user-profile-tabs">
 				<li class="tabs-title is-active"><a href="#user-profile-panel1">Basic Info</a></li>
 				<li class="tabs-title"><a href="#user-profile-panel2">Membership</a></li>
@@ -791,7 +841,8 @@ class PwtcMembers {
 					</div>
 				</div>
 			</div>
-			<div class="status_msg"></div>
+			</div>
+			<div class="status_msg row column"></div>
 			<div class="row column">
 				<input type="hidden" name="userid"/>
 				<?php if ($can_edit or $can_edit_leaders) { ?>
