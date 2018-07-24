@@ -159,8 +159,35 @@ class PwtcMembers {
 	}
 
 	public static function members_add_callback() {
+		$email = intval($_POST['email']);
+		$firstname = intval($_POST['first_name']);
+		$lastname = intval($_POST['last_name']);
+		if (function_exists('pwtc_mileage_insert_new_rider')) {
+			try {
+				$riderid = pwtc_mileage_insert_new_rider($lastname, $firstname, '2019-01-01');
+				$msg = 'New rider ID assigned: ' + $riderid;
+			}
+			catch (Exception $e) {
+				switch ($e->getMessage()) {
+					case "paramsnotvalid":
+						$msg = 'Cannot assign rider ID, error code paramsnotvalid!';
+						break;
+					case "idnotvalid":
+						$msg = 'Cannot assign rider ID, error code idnotvalid!';
+						break;
+					case "inserterror":
+						$msg = 'Cannot assign rider ID, error code inserterror!';
+						break;
+					default:
+						$msg = '';
+				}
+			}
+		}
+		else {
+			$msg = 'Cannot assign rider ID, PWTC mileage plugin not active!';
+		}
         $response = array(
-			'error' => 'Cannot add new member, not implemented!'
+			'error' => $msg
 		);
 
         echo wp_json_encode($response);
@@ -512,7 +539,10 @@ class PwtcMembers {
 				evt.preventDefault();
 				var action = "<?php echo admin_url('admin-ajax.php'); ?>";
 				var data = {
-					'action': 'pwtc_members_add'
+					'action': 'pwtc_members_add',
+					'email': $("#add-user-profile .profile-frm input[name='email']").val().trim(),
+					'first_name': $("#add-user-profile .profile-frm input[name='first_name']").val().trim(),
+					'last_name': $("#add-user-profile .profile-frm input[name='last_name']").val().trim()
 				};
 				$.post(action, data, add_user_profile_cb);
 			});
