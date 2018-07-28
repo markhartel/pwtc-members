@@ -159,13 +159,13 @@ class PwtcMembers {
 	}
 
 	public static function members_add_callback() {
-		$email = intval($_POST['email']);
-		$firstname = intval($_POST['first_name']);
-		$lastname = intval($_POST['last_name']);
+		$email = $_POST['email'];
+		$firstname = $_POST['first_name'];
+		$lastname = $_POST['last_name'];
 		if (function_exists('pwtc_mileage_insert_new_rider')) {
 			try {
 				$riderid = pwtc_mileage_insert_new_rider($lastname, $firstname, '2019-01-01');
-				$msg = 'New rider ID assigned: ' + $riderid;
+				$msg = 'New rider ID assigned: ' . $riderid;
 			}
 			catch (Exception $e) {
 				switch ($e->getMessage()) {
@@ -363,6 +363,7 @@ class PwtcMembers {
 						'userid': userid
 					};
 					$.post(action, data, display_user_profile_cb);
+					$('#please-wait').foundation('open');
 				});
 				<?php } ?>
 				<?php if ($can_delete) { ?>
@@ -372,7 +373,8 @@ class PwtcMembers {
 					$("#delete-user-profile input[name='userid']").val(userid);
 					$("#delete-user-profile .profile-frm .status_msg").html('');
 					$("#delete-user-profile .profile-frm .callout p").html('Are you sure you want to delete member ' + name + ' (ID ' + userid + ')?');
-					$.fancybox.open( {href : '#delete-user-profile'} );
+					//$.fancybox.open( {href : '#delete-user-profile'} );
+					$('#delete-user-profile').foundation('open');
 				});
 				<?php } ?>
             }
@@ -412,6 +414,7 @@ class PwtcMembers {
 
 			<?php if ($can_view or $can_edit or $can_edit_leaders) { ?>
 			function display_user_profile_cb(response) {
+				$('#please-wait').foundation('close');
 				var res = JSON.parse(response);
 				if (res.error) {
 				}
@@ -421,7 +424,7 @@ class PwtcMembers {
 					$("#edit-user-profile input[name='email']").val(res.email);
 					$("#edit-user-profile .status_msg").html('');
 					$('#user-profile-tabs').foundation('selectTab', 'user-profile-panel1');
-					$.fancybox.open( {href : '#edit-user-profile'} );
+					$('#edit-user-profile').foundation('open');
 				}
 			}
 
@@ -431,7 +434,7 @@ class PwtcMembers {
 					$("#edit-user-profile .status_msg").html('<div class="callout small alert"><p>' + res.error + '</p></div>');
 				}
 				else {
-					$.fancybox.close();
+					$('#edit-user-profile').foundation('close');
 				}
 			}
 			<?php } ?>
@@ -443,7 +446,7 @@ class PwtcMembers {
 					$("#add-user-profile .status_msg").html('<div class="callout small alert"><p>' + res.error + '</p></div>');
 				}
 				else {
-					$.fancybox.close();
+					$('#add-user-profile').foundation('close');
 				}
 			}
 			<?php } ?>
@@ -455,7 +458,8 @@ class PwtcMembers {
 					$("#delete-user-profile .status_msg").html('<div class="callout small alert"><p>' + res.error + '</p></div>');
 				}
 				else {
-					$.fancybox.close();
+					//$.fancybox.close();
+					$('#delete-user-profile').foundation('close');
 				}
 			}
 			<?php } ?>
@@ -586,8 +590,9 @@ class PwtcMembers {
 
 			<?php if ($can_add) { ?>
 			$('.new-member-a').on('click', function(e) {
+				$("#add-user-profile input[type='text']").val('');
 				$("#add-user-profile .status_msg").html('');
-				$.fancybox.open( {href : '#add-user-profile'} );
+				$('#add-user-profile').foundation('open');
 			});
 			<?php } ?>
 
@@ -600,9 +605,13 @@ class PwtcMembers {
             load_members_table('search');
 		});
 	</script>
+	<div class="reveal" id="please-wait" data-close-on-click="false" data-reveal>
+		<div class="callout warning"><p><i class="fa fa-spinner fa-pulse"></i> Please wait...</p></div>
+	</div>
 	<?php if ($can_add) { ?>
-	<div id="add-user-profile" style="display: none">
+	<div class="reveal" id="add-user-profile" data-close-on-click="false" data-reveal>
 		<form class="profile-frm">
+			<input type="hidden" name="userid"/>
 			<div class="row">
 				<div class="small-6 columns">
 					<label>First Name
@@ -659,6 +668,14 @@ class PwtcMembers {
 					</label>
 				</div>
 				<div class="small-12 large-4 columns">
+					<label>Membership Plan
+						<select>
+							<option value="Individual" selected>Individual</option>
+							<option value="Family">Family</option>
+						</select>
+					</label>
+				</div>
+				<div class="small-12 large-4 columns">
 					<label>Membership Type
 						<select>
 							<option value="Paid 1 Year" selected>Paid 1 Year</option>
@@ -668,30 +685,33 @@ class PwtcMembers {
 				</div>
 			</div>
 			<div class="status_msg row column"></div>
-			<div class="row column">
-				<input type="hidden" name="userid"/>
-				<input class="accent button" type="submit" value="Submit"/>
+			<div class="row column clearfix">
+				<input class="accent button float-left" type="submit" value="Submit"/>
+				<input class="accent button float-right" type="button" value="Cancel" data-close/>
 			</div>
 		</form>
 	</div>
 	<?php } ?>
 	<?php if ($can_delete) { ?>
-	<div id="delete-user-profile" style="display: none">
+	<!--<div id="delete-user-profile" style="display: none">-->
+	<div class="reveal" id="delete-user-profile" data-close-on-click="false" data-reveal>
 		<form class="profile-frm">
+			<input type="hidden" name="userid"/>
 		    <div class="row column">
 				<div class="callout warning"><p></p></div>
 			</div>
 			<div class="status_msg row column"></div>
-			<div class="row column">
-				<input type="hidden" name="userid"/>
-				<input class="accent button" type="submit" value="Submit"/>
+			<div class="row column clearfix">
+				<input class="accent button float-left" type="submit" value="Submit"/>
+				<input class="accent button float-right" type="button" value="Cancel" data-close/>
 			</div>
 		</form>
 	</div>
 	<?php } ?>
 	<?php if ($can_view or $can_edit or $can_edit_leaders) { ?>
-	<div id="edit-user-profile" style="display: none">
+	<div class="reveal" id="edit-user-profile" data-close-on-click="false" data-reveal>
 		<form class="profile-frm">
+			<input type="hidden" name="userid"/>
 		    <div class="row column">
 			<ul class="tabs" data-tabs id="user-profile-tabs">
 				<li class="tabs-title is-active"><a href="#user-profile-panel1">Basic Info</a></li>
@@ -790,6 +810,34 @@ class PwtcMembers {
 					</div>
 					<div class="row">
 						<div class="small-12 large-4 columns">
+							<label>Membership Plan
+								<select>
+									<option value="Individual" selected>Individual</option>
+									<option value="Family">Family</option>
+								</select>
+							</label>
+						</div>
+						<div class="small-12 large-4 columns">
+							<label>Membership Type
+								<select>
+									<option value="Paid 1 Year" selected>Paid 1 Year</option>
+									<option value="Paid 2 Year">Paid 2 Year</option>
+									<option value="Service">Service</option>
+									<option value="Lifetime">Lifetime</option>
+								</select>
+							</label>
+						</div>
+						<div class="small-12 large-4 columns">
+							<label>Release Accepted
+								<select>
+									<option value="no" selected>No</option>
+									<option value="yes">Yes</option>
+								</select>
+							</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="small-12 large-4 columns">
 							<label>Elected Position
 								<select>
 									<option value="none" selected>None</option>
@@ -807,7 +855,7 @@ class PwtcMembers {
 						</div>
 						<div class="small-12 large-4 columns">
 							<label>Appointed Position
-							<select>
+								<select>
 									<option value="none" selected>None</option>
 									<option value="Pioneer Coordinator">Pioneer Coordinator</option>
 									<option value="Historian">Historian</option>
@@ -820,16 +868,6 @@ class PwtcMembers {
 									<option value="Banquet">Banquet</option>
 									<option value="Helmet Committee">Helmet Committee</option>
 									<option value="Boxes and Bob">Boxes and Bob</option>
-								</select>
-							</label>
-						</div>
-						<div class="small-12 large-4 columns">
-							<label>Membership Type
-								<select>
-									<option value="Paid 1 Year" selected>Paid 1 Year</option>
-									<option value="Paid 2 Year">Paid 2 Year</option>
-									<option value="Service">Service</option>
-									<option value="Lifetime">Lifetime</option>
 								</select>
 							</label>
 						</div>
@@ -873,10 +911,12 @@ class PwtcMembers {
 			</div>
 			</div>
 			<div class="status_msg row column"></div>
-			<div class="row column">
-				<input type="hidden" name="userid"/>
+			<div class="row column clearfix">
 				<?php if ($can_edit or $can_edit_leaders) { ?>
-				<input class="accent button" type="submit" value="Submit"/>
+				<input class="accent button float-left" type="submit" value="Submit"/>
+				<input class="accent button float-right" type="button" value="Cancel" data-close/>
+				<?php } else {?>
+				<input class="accent button float-left" type="button" value="Cancel" data-close/>
 				<?php } ?>
 			</div>
 		</form>
