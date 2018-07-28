@@ -363,6 +363,7 @@ class PwtcMembers {
 						'userid': userid
 					};
 					$.post(action, data, display_user_profile_cb);
+					$('#please-wait .wait-message').html('Loading member profile.');
 					$('#please-wait').foundation('open');
 				});
 				<?php } ?>
@@ -429,37 +430,43 @@ class PwtcMembers {
 			}
 
 			function update_user_profile_cb(response) {
+				$('#please-wait').foundation('close');
 				var res = JSON.parse(response);
 				if (res.error) {
 					$("#edit-user-profile .status_msg").html('<div class="callout small alert"><p>' + res.error + '</p></div>');
+					$('#edit-user-profile').foundation('open');
 				}
 				else {
-					$('#edit-user-profile').foundation('close');
+					//$('#edit-user-profile').foundation('close');
 				}
 			}
 			<?php } ?>
 
 			<?php if ($can_add) { ?>
 			function add_user_profile_cb(response) {
+				$('#please-wait').foundation('close');
 				var res = JSON.parse(response);
 				if (res.error) {
 					$("#add-user-profile .status_msg").html('<div class="callout small alert"><p>' + res.error + '</p></div>');
+					$('#add-user-profile').foundation('open');
 				}
 				else {
-					$('#add-user-profile').foundation('close');
+					//$('#add-user-profile').foundation('close');
 				}
 			}
 			<?php } ?>
 
 			<?php if ($can_delete) { ?>
 			function delete_user_profile_cb(response) {
+				$('#please-wait').foundation('close');
 				var res = JSON.parse(response);
 				if (res.error) {
 					$("#delete-user-profile .status_msg").html('<div class="callout small alert"><p>' + res.error + '</p></div>');
+					$('#delete-user-profile').foundation('open');
 				}
 				else {
 					//$.fancybox.close();
-					$('#delete-user-profile').foundation('close');
+					//$('#delete-user-profile').foundation('close');
 				}
 			}
 			<?php } ?>
@@ -549,6 +556,8 @@ class PwtcMembers {
 					'last_name': $("#add-user-profile .profile-frm input[name='last_name']").val().trim()
 				};
 				$.post(action, data, add_user_profile_cb);
+				$('#please-wait .wait-message').html('Adding new member profile.');
+				$('#please-wait').foundation('open');
 			});
 			<?php } ?>
 
@@ -562,6 +571,8 @@ class PwtcMembers {
 					'userid': userid
 				};
 				$.post(action, data, delete_user_profile_cb);
+				$('#please-wait .wait-message').html('Deleting member profile.');
+				$('#please-wait').foundation('open');
 			});
 			<?php } ?>
 
@@ -575,7 +586,8 @@ class PwtcMembers {
 					'userid': userid
 				};
 				$.post(action, data, update_user_profile_cb);
-				
+				$('#please-wait .wait-message').html('Updating member profile.');
+				$('#please-wait').foundation('open');
 			});
 			<?php } ?>
 			<?php if ($can_edit_leaders and !$can_edit) { ?>
@@ -606,10 +618,13 @@ class PwtcMembers {
 		});
 	</script>
 	<div class="reveal" id="please-wait" data-close-on-click="false" data-reveal>
-		<div class="callout warning"><p><i class="fa fa-spinner fa-pulse"></i> Please wait...</p></div>
+		<div class="callout warning">
+			<p><i class="fa fa-spinner fa-pulse"></i> Please wait...</p>
+			<p class="wait-message"></p>
+		</div>
 	</div>
 	<?php if ($can_add) { ?>
-	<div class="reveal" id="add-user-profile" data-close-on-click="false" data-reveal>
+	<div class="large reveal" id="add-user-profile" data-close-on-click="false" data-v-offset="50" data-reveal>
 		<form class="profile-frm">
 			<input type="hidden" name="userid"/>
 			<div class="row">
@@ -709,7 +724,7 @@ class PwtcMembers {
 	</div>
 	<?php } ?>
 	<?php if ($can_view or $can_edit or $can_edit_leaders) { ?>
-	<div class="reveal" id="edit-user-profile" data-close-on-click="false" data-reveal>
+	<div class="large reveal" id="edit-user-profile" data-close-on-click="false" data-v-offset="50" data-reveal>
 		<form class="profile-frm">
 			<input type="hidden" name="userid"/>
 		    <div class="row column">
