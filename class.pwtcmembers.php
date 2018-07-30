@@ -162,6 +162,13 @@ class PwtcMembers {
 		$email = $_POST['email'];
 		$firstname = $_POST['first_name'];
 		$lastname = $_POST['last_name'];
+		if (email_exists($email)) {	
+			$response = array(
+				'error' => 'Email already in use by existing account.'
+			);
+			echo wp_json_encode($response);
+			wp_die();
+		}	
 		if (function_exists('pwtc_mileage_insert_new_rider')) {
 			try {
 				$riderid = pwtc_mileage_insert_new_rider($lastname, $firstname, '2019-01-01');
