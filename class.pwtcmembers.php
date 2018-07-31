@@ -6,7 +6,6 @@ class PwtcMembers {
 	const EDIT_MEMBERS_CAP = 'pwtc_edit_members';
 	const ADD_MEMBERS_CAP = 'pwtc_add_members';
 	const DELETE_MEMBERS_CAP = 'pwtc_delete_members';
-	const EDIT_LEADERS_CAP = 'pwtc_edit_leaders';
 
     private static $initiated = false;
 
@@ -324,7 +323,6 @@ class PwtcMembers {
 			$can_edit = current_user_can(self::EDIT_MEMBERS_CAP);
 			$can_add = current_user_can(self::ADD_MEMBERS_CAP);
 			$can_delete = current_user_can(self::DELETE_MEMBERS_CAP);
-			$can_edit_leaders = current_user_can(self::EDIT_LEADERS_CAP);
 			$roles = self::parse_roles($a['roles']);
 			ob_start();
 	?>
@@ -333,7 +331,7 @@ class PwtcMembers {
 
 			function populate_members_table(members) {
 				var header = '<table class="pwtc-mapdb-rwd-table"><tr><th>Last Name</th><th>First Name</th><th>Email</th><th>Phone</th>' +
-				<?php if ($can_view or $can_edit or $can_edit_leaders or $can_delete) { ?>
+				<?php if ($can_view or $can_edit or $can_delete) { ?>
 				'<th>Actions</th>' +
 				<?php } ?>
 				'</tr></table>';
@@ -344,9 +342,9 @@ class PwtcMembers {
 					'<td data-th="First Name">' + item.first_name + '</td>' +
 					'<td data-th="Email">' + item.email + '</td>' +
 					'<td data-th="Phone">' + item.phone + '</td>' +
-					<?php if ($can_view or $can_edit or $can_edit_leaders or $can_delete) { ?>
+					<?php if ($can_view or $can_edit or $can_delete) { ?>
 					'<td data-th="Actions">' +
-						<?php if ($can_edit or $can_edit_leaders) { ?>
+						<?php if ($can_edit) { ?>
 						'<a class="member-profile-a" title="Edit member profile."><i class="fa fa-pencil-square"></i></a> ' +
 						<?php } else if ($can_view) { ?>
 						'<a class="member-profile-a" title="View member profile."><i class="fa fa-eye"></i></a> ' +
@@ -359,7 +357,7 @@ class PwtcMembers {
 					'</tr>';
 					$('.pwtc-members-display-div table').append(data);    
 				});
-				<?php if ($can_view or $can_edit or $can_edit_leaders) { ?>
+				<?php if ($can_view or $can_edit) { ?>
 				$('.pwtc-members-display-div table .member-profile-a').on('click', function(e) {
 					$("#edit-user-profile input[type='text']").val('');
 					var userid = $(this).parent().parent().attr('userid');
@@ -420,7 +418,7 @@ class PwtcMembers {
 				}
 			}
 
-			<?php if ($can_view or $can_edit or $can_edit_leaders) { ?>
+			<?php if ($can_view or $can_edit) { ?>
 			function display_user_profile_cb(response) {
 				$('#please-wait').foundation('close');
 				var res = JSON.parse(response);
@@ -583,7 +581,7 @@ class PwtcMembers {
 			});
 			<?php } ?>
 
-			<?php if ($can_edit or $can_edit_leaders) { ?>
+			<?php if ($can_edit) { ?>
 			$('#edit-user-profile .profile-frm').on('submit', function(evt) {
 				evt.preventDefault();
 				var userid = $("#edit-user-profile input[name='userid']").val();
@@ -597,12 +595,12 @@ class PwtcMembers {
 				$('#please-wait').foundation('open');
 			});
 			<?php } ?>
-			<?php if ($can_edit_leaders and !$can_edit) { ?>
+			<?php if (!$can_edit) { ?>
 			$("#edit-user-profile .profile-frm #user-profile-panel1 input[type='text']").attr("disabled", "disabled");
 			$("#edit-user-profile .profile-frm #user-profile-panel1 select").attr("disabled", "disabled");
 			$("#edit-user-profile .profile-frm #user-profile-panel2 input[type='text']").attr("disabled", "disabled");
 			$("#edit-user-profile .profile-frm #user-profile-panel2 select").attr("disabled", "disabled");
-			<?php } else if (!$can_edit_leaders and !$can_edit) { ?>
+			<?php } else if (!$can_edit) { ?>
 			$("#edit-user-profile .profile-frm input[type='text']").attr("disabled", "disabled");
 			$("#edit-user-profile .profile-frm select").attr("disabled", "disabled");
 			<?php } ?>
@@ -730,7 +728,7 @@ class PwtcMembers {
 		</form>
 	</div>
 	<?php } ?>
-	<?php if ($can_view or $can_edit or $can_edit_leaders) { ?>
+	<?php if ($can_view or $can_edit) { ?>
 	<div class="large reveal" id="edit-user-profile" data-close-on-click="false" data-v-offset="50" data-reveal>
 		<form class="profile-frm">
 			<input type="hidden" name="userid"/>
@@ -738,7 +736,7 @@ class PwtcMembers {
 			<ul class="tabs" data-tabs id="user-profile-tabs">
 				<li class="tabs-title is-active"><a href="#user-profile-panel1">Basic Info</a></li>
 				<li class="tabs-title"><a href="#user-profile-panel2">Membership</a></li>
-				<li class="tabs-title"><a href="#user-profile-panel3">Ride Leader</a></li>
+				<li class="tabs-title"><a href="#user-profile-panel3">Family Members</a></li>
 			</ul>
 			<div class="tabs-content" data-tabs-content="user-profile-tabs">
 				<div class="tabs-panel is-active" id="user-profile-panel1">
@@ -896,45 +894,12 @@ class PwtcMembers {
 					</div>
 				</div>
 				<div class="tabs-panel" id="user-profile-panel3">
-					<div class="row">
-						<div class="small-12 medium-6 columns">
-							<label>Use Contact Email
-								<select>
-									<option value="no" selected>No, use account email</option>
-									<option value="yes">Yes</option>
-								</select>
-							</label>
-						</div>
-						<div class="small-12 medium-6 columns">
-							<label>Contact Email
-								<input type="text" name="contact_email"/>
-							</label>
-						</div>
-						<div class="small-12 medium-6 columns">
-							<label>Contact Voice Phone
-								<input type="text" name="voice_phone"/>
-							</label>
-						</div>
-						<div class="small-12 medium-6 columns">
-							<label>Contact Text Phone
-								<input type="text" name="text_phone"/>
-							</label>
-						</div>
-						<div class="small-12 medium-6 columns">
-							<label>Is Ride Leader
-								<select>
-									<option value="no" selected>No</option>
-									<option value="yes">Yes</option>
-								</select>
-							</label>
-						</div>
-					</div>
 				</div>
 			</div>
 			</div>
 			<div class="status_msg row column"></div>
 			<div class="row column clearfix">
-				<?php if ($can_edit or $can_edit_leaders) { ?>
+				<?php if ($can_edit) { ?>
 				<input class="accent button float-left" type="submit" value="Submit"/>
 				<input class="accent button float-right" type="button" value="Cancel" data-close/>
 				<?php } else {?>
@@ -1050,13 +1015,7 @@ class PwtcMembers {
 			$ms->add_cap(self::EDIT_MEMBERS_CAP);
 			$ms->add_cap(self::ADD_MEMBERS_CAP);
 			$ms->add_cap(self::DELETE_MEMBERS_CAP);
-				self::write_log('PWTC Members plugin added capabilities to membership_secretary role');
-		} 
-		$captain = get_role('ride_captain'); 
-		if ($captain !== null) {
-			$captain->add_cap(self::VIEW_MEMBERS_CAP);
-			$captain->add_cap(self::EDIT_LEADERS_CAP);
-			pwtc_mileage_write_log('PWTC Members plugin added capabilities to ride_captain role');
+			self::write_log('PWTC Members plugin added capabilities to membership_secretary role');
 		} 
 	}
 
@@ -1077,12 +1036,6 @@ class PwtcMembers {
 				self::write_log('PWTC Members plugin removed membership_secretary role');
 			}
 		}
-		$captain = get_role('ride_captain'); 
-		if ($captain !== null) {
-			$captain->remove_cap(self::VIEW_MEMBERS_CAP);
-			$captain->remove_cap(self::EDIT_LEADERS_CAP);
-			pwtc_mileage_write_log('PWTC Members plugin removed capabilities from ride_captain role');
-		} 
 	}	
 
     /*************************************************************/
