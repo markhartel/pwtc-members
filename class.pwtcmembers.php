@@ -174,23 +174,11 @@ class PwtcMembers {
 				$msg = 'New rider ID assigned: ' . $riderid;
 			}
 			catch (Exception $e) {
-				switch ($e->getMessage()) {
-					case "paramsnotvalid":
-						$msg = 'Cannot assign rider ID, error code paramsnotvalid!';
-						break;
-					case "idnotvalid":
-						$msg = 'Cannot assign rider ID, error code idnotvalid!';
-						break;
-					case "inserterror":
-						$msg = 'Cannot assign rider ID, error code inserterror!';
-						break;
-					default:
-						$msg = '';
-				}
+				$msg = $e->getMessage();
 			}
 		}
 		else {
-			$msg = 'Cannot assign rider ID, PWTC mileage plugin not active!';
+			$msg = 'Cannot create new rider, PWTC mileage plugin not active.';
 		}
         $response = array(
 			'error' => $msg
@@ -799,17 +787,24 @@ class PwtcMembers {
 								<input type="text" name="date_updated" />
 							</label>
 						</div>
-						<div class="small-12 large-4 columns">
+						<div class="small-12 large-2 columns">
 							<label>Date Expires
 								<input type="text" name="date_expires" />
 							</label>
 						</div>
+						<div class="small-12 large-2 columns">
+							<a class="button" title="Add one year."><i class="fa fa-plus"></i> Year</a>
+							<a class="button" title="Subtract one year."><i class="fa fa-minus"></i> Year</a>
+						</div>
 					</div>
 					<div class="row">
-						<div class="small-12 large-4 columns">
+						<div class="small-12 large-2 columns">
 							<label>Rider ID
 								<input type="text" name="rider_id" />
 							</label>
+						</div>
+						<div class="small-12 large-2 columns">
+							<a class="button" title="Download rider ID card."><i class="fa fa-download"></i> Card</a>
 						</div>
 						<div class="small-12 large-4 columns">
 							<label>Show in Membership Directory
