@@ -21,6 +21,7 @@ register_activation_hook( __FILE__, array( 'PwtcMembers', 'plugin_activation' ) 
 register_deactivation_hook( __FILE__, array( 'PwtcMembers', 'plugin_deactivation' ) );
 register_uninstall_hook( __FILE__, array( 'PwtcMembers', 'plugin_uninstall' ) );
 
+require_once( PWTC_MEMBERS__PLUGIN_DIR . 'pwtc-members-hooks.php' );
 require_once( PWTC_MEMBERS__PLUGIN_DIR . 'class.pwtcmembers.php' );
 
 add_action( 'init', array( 'PwtcMembers', 'init' ) );
