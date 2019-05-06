@@ -38,6 +38,9 @@ class PwtcMembers {
 		add_action( 'wc_memberships_after_user_membership_member_details',
 			array( 'PwtcMembers', 'after_user_member_details_callback' ) );
 
+//		add_action( 'wc_memberships_user_membership_created', 
+//			array( 'PwtcMembers', 'user_membership_created_callback' ), 999, 2);
+
 		/* Register shortcode callbacks */
 
 		/* Register AJAX request/response callbacks */
@@ -106,6 +109,50 @@ class PwtcMembers {
 		<div>Rider ID: <?php echo $rider_id; ?></div>
 		<div>Release Accepted: <?php echo $release_accepted; ?></div>
 		<?php
+	}
+
+	public static function user_membership_created_callback($membership_plan, $args = array()) {
+		$user_membership_id = isset($args['user_membership_id']) ? absint($args['user_membership_id']) : null;
+		$user_id = isset($args['user_id']) ? absint($args['user_id']) : null;
+		$is_update = isset($args['is_update']) ? $args['is_update'] : false;
+
+		if (!$user_membership_id) {
+			return;
+		}
+		if (!$user_id) {
+			return;
+		}
+
+		if ($is_update) {
+			return;
+		}
+
+		$user_membership = wc_memberships_get_user_membership($user_membership_id);
+		if (!$user_membership) {
+			return;			
+		}
+		
+		$user_data = get_userdata($user_id);
+		if (!$user_data) {
+			return;			
+		}
+
+		$rider_id = get_field('rider_id', 'user_'.$user_id);
+		if (!$rider_id) {
+			$rider_id = '';
+		}
+
+		$team = false;
+		if (function_exists('wc_memberships_for_teams_get_user_membership_team')) {
+			$team = wc_memberships_for_teams_get_user_membership_team( $user_membership_id );
+		}
+
+		if ( $team ) {
+
+		}
+		else {
+
+		}		
 	}
 
 	/*************************************************************/
