@@ -1,5 +1,9 @@
 <?php
 
+use Swift_Mailer;
+use Swift_MailTransport;
+use Swift_Message;
+
 class PwtcMembers {
 
     private static $initiated = false;
@@ -127,8 +131,8 @@ class PwtcMembers {
 			return;
 		}
 
-		$user_membership = wc_memberships_get_user_membership($user_membership_id);
-		if (!$user_membership) {
+		$membership = wc_memberships_get_user_membership($user_membership_id);
+		if (!$membership) {
 			return;			
 		}
 		
@@ -137,10 +141,15 @@ class PwtcMembers {
 			return;			
 		}
 
-		$rider_id = get_field('rider_id', 'user_'.$user_id);
-		if (!$rider_id) {
-			$rider_id = '';
+		$member_email = $user_data->user_email;
+		$member_name = $user_data->first_name . ' ' . $user_data->last_name;
+
+		$member_riderid = get_field('rider_id', 'user_'.$user_id);
+		if (!$member_riderid) {
+			$member_riderid = '';
 		}
+
+		$member_type = $membership_plan->get_name(); 
 
 		$team = false;
 		if (function_exists('wc_memberships_for_teams_get_user_membership_team')) {
@@ -148,11 +157,35 @@ class PwtcMembers {
 		}
 
 		if ( $team ) {
-
+			$message = get_field('ride_calandar_content', 'option');
+			$member_expires = date('F j, Y', $team->get_local_membership_end_date('timestamp'));
+			$member_starts = date('F j, Y', $team->get_local_date('timestamp'));
+			$member_type = 'Family ' . $member_type;
 		}
 		else {
+			$message = get_field('ride_calandar_content', 'option');
+			$member_expires = date('F j, Y', $membership->get_local_end_date('timestamp'));
+			$member_starts = date('F j, Y', $membership->get_local_start_date('timestamp'));
+			$member_type = 'Individual ' . $member_type;
+		}	
 
-		}		
+		$member_cost = '';
+
+		$message = str_replace("{riderid}", $member_riderid, $message);
+		$message = str_replace("{expires}", $member_expires, $message);
+		$message = str_replace("{starts}", $member_starts, $message);
+		$message = str_replace("{email}", $member_email, $message);
+		$message = str_replace("{name}", $member_name, $message);
+		$message = str_replace("{type}", $member_type, $message);
+
+		$subject = "Portland Bicycling Club Membership";
+		$from = array('wordpress@pwtc.com' => 'Portland Bicycling Club');
+		$to = array($member_email => $member_name);
+
+		$transport = Swift_MailTransport::newInstance();
+        $mailer = Swift_Mailer::newInstance($transport);
+		$message = Swift_Message::newInstance()->setSubject($subject)->setFrom($from)->setTo($to)->setBody($message, 'text/html');
+		$mailer->send($message);
 	}
 
 	/*************************************************************/
