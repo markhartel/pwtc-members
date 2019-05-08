@@ -151,6 +151,13 @@ class PwtcMembers {
 
 		$member_type = $membership_plan->get_name(); 
 
+		$member_cost = 'N/A';
+		$product = $membership->get_product(true);
+		if ($product) {
+			$price = $product->get_price();
+			$member_cost = '$' . $price;
+		}
+
 		$team = false;
 		if (function_exists('wc_memberships_for_teams_get_user_membership_team')) {
 			$team = wc_memberships_for_teams_get_user_membership_team( $user_membership_id );
@@ -169,14 +176,13 @@ class PwtcMembers {
 			$member_type = 'Individual ' . $member_type;
 		}	
 
-		$member_cost = '';
-
 		$message = str_replace("{riderid}", $member_riderid, $message);
 		$message = str_replace("{expires}", $member_expires, $message);
 		$message = str_replace("{starts}", $member_starts, $message);
 		$message = str_replace("{email}", $member_email, $message);
 		$message = str_replace("{name}", $member_name, $message);
 		$message = str_replace("{type}", $member_type, $message);
+		$message = str_replace("{cost}", $member_cost, $message);
 
 		$subject = "Portland Bicycling Club Membership";
 		$from = array('wordpress@pwtc.com' => 'Portland Bicycling Club');
