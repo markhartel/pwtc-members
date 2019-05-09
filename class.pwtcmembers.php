@@ -1,8 +1,10 @@
 <?php
 
+/*
 use Swift_Mailer;
 use Swift_MailTransport;
 use Swift_Message;
+*/
 
 class PwtcMembers {
 
@@ -176,22 +178,35 @@ class PwtcMembers {
 			$member_type = 'Individual ' . $member_type;
 		}	
 
-		$message = str_replace("{riderid}", $member_riderid, $message);
-		$message = str_replace("{expires}", $member_expires, $message);
-		$message = str_replace("{starts}", $member_starts, $message);
-		$message = str_replace("{email}", $member_email, $message);
-		$message = str_replace("{name}", $member_name, $message);
-		$message = str_replace("{type}", $member_type, $message);
-		$message = str_replace("{cost}", $member_cost, $message);
+		$membersec_email = get_field('membership_captain_email', 'option');
+		$membersec_name = get_field('membership_captain_name', 'option');
 
-		$subject = "Portland Bicycling Club Membership";
+		$message = str_replace('{riderid}', $member_riderid, $message);
+		$message = str_replace('{expires}', $member_expires, $message);
+		$message = str_replace('{starts}', $member_starts, $message);
+		$message = str_replace('{email}', $member_email, $message);
+		$message = str_replace('{name}', $member_name, $message);
+		$message = str_replace('{type}', $member_type, $message);
+		$message = str_replace('{cost}', $member_cost, $message);
+
+		$subject = 'Portland Bicycling Club Membership';
+
+		/*
 		$from = array('wordpress@pwtc.com' => 'Portland Bicycling Club');
 		$to = array($member_email => $member_name);
-
 		$transport = Swift_MailTransport::newInstance();
         $mailer = Swift_Mailer::newInstance($transport);
 		$message = Swift_Message::newInstance()->setSubject($subject)->setFrom($from)->setTo($to)->setBody($message, 'text/html');
 		$mailer->send($message);
+		*/
+
+		$to = $member_name . ' <' . $member_email . '>';
+		$bcc = $membersec_name . ' <' . $membersec_email . '>';
+		$headers = array(
+			'Content-type: text/html;charset=utf-8',
+			'Bcc: ' . $bcc
+		);
+		wp_mail($to, $subject, $message, $headers);
 	}
 
 	/*************************************************************/
