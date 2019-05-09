@@ -44,8 +44,8 @@ class PwtcMembers {
 		add_action( 'wc_memberships_after_user_membership_member_details',
 			array( 'PwtcMembers', 'after_user_member_details_callback' ) );
 
-//		add_action( 'wc_memberships_user_membership_created', 
-//			array( 'PwtcMembers', 'user_membership_created_callback' ), 999, 2);
+		add_action( 'wc_memberships_grant_membership_access_from_purchase', 
+			array( 'PwtcMembers', 'user_membership_granted_callback' ), 10, 2);
 
 		/* Register shortcode callbacks */
 
@@ -117,19 +117,15 @@ class PwtcMembers {
 		<?php
 	}
 
-	public static function user_membership_created_callback($membership_plan, $args = array()) {
+	public static function user_membership_granted_callback($membership_plan, $args = array()) {
 		$user_membership_id = isset($args['user_membership_id']) ? absint($args['user_membership_id']) : null;
 		$user_id = isset($args['user_id']) ? absint($args['user_id']) : null;
-		$is_update = isset($args['is_update']) ? $args['is_update'] : false;
+		$product_id = isset($args['product_id']) ? absint($args['product_id']) : null;
 
 		if (!$user_membership_id) {
 			return;
 		}
 		if (!$user_id) {
-			return;
-		}
-
-		if ($is_update) {
 			return;
 		}
 
