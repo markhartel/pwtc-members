@@ -43,6 +43,9 @@ class PwtcMembers {
 
 		/* Register shortcode callbacks */
 
+		add_shortcode('pwtc_member_directory', 
+			array( 'PwtcMembers', 'shortcode_member_directory'));
+
 		add_shortcode('pwtc_member_statistics', 
 			array( 'PwtcMembers', 'shortcode_member_statistics'));
 
@@ -58,7 +61,16 @@ class PwtcMembers {
 		add_shortcode('pwtc_member_accept_release', 
 			array( 'PwtcMembers', 'shortcode_member_accept_release'));
 
+		add_shortcode('pwtc_member_leader_contact', 
+			array( 'PwtcMembers', 'shortcode_member_leader_contact'));
+
 		/* Register AJAX request/response callbacks */
+
+		add_action( 'wp_ajax_pwtc_member_lookup', 
+			array( 'PwtcMembers', 'member_lookup_callback') );
+
+		add_action( 'wp_ajax_pwtc_member_fetch_address', 
+			array( 'PwtcMembers', 'member_fetch_address_callback') );
 	
 	}
 
@@ -228,6 +240,311 @@ class PwtcMembers {
 	/*************************************************************/
 	/* Shortcode generation callback functions
 	/*************************************************************/
+
+	// Generates the [pwtc_member_directory] shortcode.
+	public static function shortcode_member_directory($atts) {
+		$a = shortcode_atts(array('limit' => 10, 'mode' => 'readonly', 'privacy' => 'off'), $atts);
+		$current_user = wp_get_current_user();
+		if ( 0 == $current_user->ID ) {
+			return '<div class="callout small warning"><p>Please log in to view the member directory.</p></div>';
+		}
+		else {
+			$can_view_address = current_user_can('manage_options');
+			$can_view_leaders = true;
+			ob_start();
+	?>
+	<script type="text/javascript">
+		jQuery(document).ready(function($) { 
+
+			<?php if ($can_view_address) { ?>
+			function display_user_address_cb(response) {
+				$('#pwtc-member-wait-div').foundation('close');
+				var res = JSON.parse(response);
+				if (res.error) {
+					$("#pwtc-member-error-div .error-msg").html(res.error);
+					$('#pwtc-member-error-div').foundation('open');
+				}
+				else {
+					$('#pwtc-member-address-div .address-data').empty();
+					$('#pwtc-member-address-div .contact-data').empty();
+					$('#pwtc-member-address-div .address-data').append(
+						'<div>' + res.first_name + ' ' + res.last_name + '</div>');
+					$('#pwtc-member-address-div .address-data').append(
+						'<div>' + res.street1 + '</div>');
+					$('#pwtc-member-address-div .address-data').append(
+						'<div>' + res.street2 + '</div>');
+					$('#pwtc-member-address-div .address-data').append(
+						'<div>' + res.city + ' ' + res.state + ' ' + res.zipcode + '</div>');
+					$('#pwtc-member-address-div .contact-data').append(
+						'<div>' + res.email + '</div>');
+					$('#pwtc-member-address-div .contact-data').append(
+						'<div>' + res.phone + '</div>');
+					$('#pwtc-member-address-div .contact-data').append(
+						'<div>Family:' + res.family + '</div>');
+					$('#pwtc-member-address-div .contact-data').append(
+						'<div>Rider ID: ' + res.riderid + '</div>');
+					if (res.riderid.length > 0 && res.valid_member) {
+						$('#pwtc-member-address-div .contact-data').append(
+							'<div><a><i class="fa fa-download"></i> download rider card</a>' +
+							'<form class="download-frm" method="POST">' +
+							'<input type="hidden" name="rider_id" value="' + res.riderid + '"/>' +
+							'<input type="hidden" name="user_id" value="' + res.userid + '"/>' +
+							'<input type="hidden" name="pwtc_mileage_download_riderid"/>' +
+							'</form></div>'
+						);
+						$('#pwtc-member-address-div a').on('click', function(e) {
+							$('#pwtc-member-address-div .download-frm').submit();
+						});
+					}
+					$('#pwtc-member-address-div').foundation('open');
+				}
+			}
+			<?php } ?>
+
+			function populate_members_table(members) {
+				var header = '<table class="pwtc-mapdb-rwd-table"><tr><th>Member Name</th><th>Account Email</th><th>Account Phone</th>' +
+				<?php if ($can_view_address) { ?>
+				'<th>Actions</th>' +
+				<?php } ?>
+				'</tr></table>';
+				$('#pwtc-member-list-div').append(header);
+				members.forEach(function(item) {
+					var data = '<tr userid="' + item.ID + '">' +
+					'<td data-th="Name">' + item.first_name + ' ' + item.last_name + 
+					(item.is_expired ? ' <i class="fa fa-exclamation-triangle" title="Membership Expired"></i>' : '') +
+					(item.is_ride_leader ? ' <i class="fa fa-bicycle" title="Ride Leader"></i>' : '') + '</td>' + 
+					'<td data-th="Email">' + item.email + '</td>' +
+					'<td data-th="Phone">' + item.phone + '</td>' +
+					<?php if ($can_view_address) { ?>
+					'<td data-th="Actions">' +
+						'<a class="view_address" title="View member contact information."><i class="fa fa-home"></i></a> ' +	
+					'</td>' +
+					<?php } ?>
+					'</tr>';
+					$('#pwtc-member-list-div table').append(data);    
+				});
+				<?php if ($can_view_address) { ?>
+				$('#pwtc-member-list-div table .view_address').on('click', function(e) {
+					var userid = $(this).parent().parent().attr('userid');
+					var action = "<?php echo admin_url('admin-ajax.php'); ?>";
+					var data = {
+						'action': 'pwtc_member_fetch_address',
+						'userid': userid
+					};
+					$.post(action, data, display_user_address_cb);
+					$('#pwtc-member-wait-div .wait-message').html('Loading member address information.');
+					$('#pwtc-member-wait-div').foundation('open');
+				});
+				<?php } ?>
+            }
+
+			function create_paging_form(pagenum, numpages, totalusers) {
+				$('#pwtc-member-list-div').append(
+					'<form class="page-frm">' +
+                    '<input class="prev-btn button" style="margin: 0" type="button" value="< Prev"/>' +
+					'<span style="margin: 0 10px">Page ' + pagenum + ' of ' + numpages + 
+					' (' + totalusers + ' records)</span>' +
+                    '<input class="next-btn button" style="margin: 0" type="button" value="Next >"/>' +
+					'<span class="page-msg" style="margin: 0 10px"></span>' +
+					'<input name="pagenum" type="hidden" value="' + pagenum + '"/>' +
+					'<input name="numpages" type="hidden" value="' + numpages + '"/>' +
+					'</form>'
+				);
+				$('#pwtc-member-list-div .page-frm .prev-btn').on('click', function(evt) {
+					evt.preventDefault();
+					load_members_table('prev');
+				});
+				if (pagenum == 1) {
+					$('#pwtc-member-list-div .page-frm .prev-btn').attr("disabled", "disabled");
+				}
+				else {
+					$('#pwtc-member-list-div .page-frm .prev-btn').removeAttr("disabled");
+				}
+				$('#pwtc-member-list-div .page-frm .next-btn').on('click', function(evt) {
+					evt.preventDefault();
+					load_members_table('next');
+				});
+				if (pagenum == numpages) {
+					$('#pwtc-member-list-div .page-frm .next-btn').attr("disabled", "disabled");
+				}
+				else {
+					$('#pwtc-member-list-div .page-frm .next-btn').removeAttr("disabled");
+				}
+			}
+
+			function lookup_members_cb(response) {
+				var res = JSON.parse(response);
+				$('#pwtc-member-list-div').empty();
+				if (res.error) {
+					$('#pwtc-member-list-div').append(
+						'<div class="callout small alert"><p>' + res.error + '</p></div>');
+				}
+				else {
+					if (res.members.length > 0) {
+						populate_members_table(res.members);
+						if (res.total_pages > 1) {
+							create_paging_form(res.page_number, res.total_pages, res.total_users);
+						}
+					}
+					else {
+						$('#pwtc-member-list-div').append(
+							'<div class="callout small warning"><p>No members found.</p></div>');
+					}
+				}
+			}   
+
+			function load_members_table(mode) {
+                var action = "<?php echo admin_url('admin-ajax.php'); ?>";
+				var data = {
+					'action': 'pwtc_member_lookup',
+					'privacy': '<?php echo $a['privacy'] ?>',
+					'limit': <?php echo $a['limit'] ?>
+				};
+				if (mode != 'search') {
+					data.role = $("#pwtc-member-search-div .search-frm input[name='role_sav']").val();
+					data.email = $("#pwtc-member-search-div .search-frm input[name='email_sav']").val();
+					data.last_name = $("#pwtc-member-search-div .search-frm input[name='last_name_sav']").val();
+					data.first_name = $("#pwtc-member-search-div .search-frm input[name='first_name_sav']").val();
+					if (mode == 'refresh') {
+						if ($("#pwtc-member-list-div .page-frm").length != 0) {
+							var pagenum = $("#pwtc-member-list-div .page-frm input[name='pagenum']").val();
+							data.page_number = parseInt(pagenum);
+							$('#pwtc-member-list-div .page-frm .page-msg').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');	
+						}
+						else {
+							$('#pwtc-member-list-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
+						}
+					}
+					else {
+						var pagenum = $("#pwtc-member-list-div .page-frm input[name='pagenum']").val();
+						var numpages = $("#pwtc-member-list-div .page-frm input[name='numpages']").val();
+						if (mode == 'prev') {
+							data.page_number = parseInt(pagenum) - 1;
+						}
+						else if (mode == 'next') {
+							data.page_number = parseInt(pagenum) + 1;
+						}
+						$('#pwtc-member-list-div .page-frm .page-msg').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
+					}
+				}
+				else {
+					data.role = $("#pwtc-member-search-div .search-frm .role").val();
+					data.email = $("#pwtc-member-search-div .search-frm input[name='email']").val().trim();
+					data.last_name = $("#pwtc-member-search-div .search-frm input[name='last_name']").val().trim();
+					data.first_name = $("#pwtc-member-search-div .search-frm input[name='first_name']").val().trim();
+					$("#pwtc-member-search-div .search-frm input[name='role_sav']").val(data.role);
+					$("#pwtc-member-search-div .search-frm input[name='email_sav']").val(data.email);
+					$("#pwtc-member-search-div .search-frm input[name='last_name_sav']").val(data.last_name);
+					$("#pwtc-member-search-div .search-frm input[name='first_name_sav']").val(data.first_name);	
+					$('#pwtc-member-list-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
+				}
+
+				$.post(action, data, lookup_members_cb); 
+			}
+
+			$('#pwtc-member-search-div .search-frm').on('submit', function(evt) {
+				evt.preventDefault();
+				load_members_table('search');
+			});
+
+			$('#pwtc-member-search-div .search-frm .reset-btn').on('click', function(evt) {
+				evt.preventDefault();
+				$("#pwtc-member-search-div .search-frm input[type='text']").val('');
+				$("#pwtc-member-search-div .search-frm .role").val('all'); 
+				$('#pwtc-member-list-div').empty();
+				load_members_table('search');
+			});
+
+			load_members_table('search');
+		});
+	</script>
+	<?php if ($can_view_address) { ?>
+	<div id="pwtc-member-error-div" class="small reveal" data-close-on-click="false" data-v-offset="100" data-reveal>
+		<form class="profile-frm">
+		    <div class="row column">
+				<div class="callout alert"><p class="error-msg"></p></div>
+			</div>
+			<div class="row column clearfix">
+				<input class="accent button float-left" type="button" value="Close" data-close/>
+			</div>
+		</form>
+	</div>
+	<div id="pwtc-member-wait-div" class="small reveal" data-close-on-click="false" data-v-offset="100" data-reveal>
+		<div class="callout warning">
+			<p><i class="fa fa-spinner fa-pulse"></i> Please wait...</p>
+			<p class="wait-message"></p>
+		</div>
+	</div>
+	<div id="pwtc-member-address-div" class="small reveal" data-close-on-click="false" data-v-offset="100" data-reveal>
+		<form class="profile-frm">
+			<div class="row column">
+				<div class="callout primary">
+					<p class="address-data"></p>
+					<p class="contact-data"></p>
+				</div>
+			</div>
+			<div class="row column clearfix">
+				<input class="accent button float-left" type="button" value="Close" data-close/>
+			</div>
+		</form>
+	</div>
+	<?php } ?>
+	<div id='pwtc-member-search-div'>
+		<ul class="accordion" data-accordion data-allow-all-closed="true">
+			<li class="accordion-item" data-accordion-item>
+				<a href="#" class="accordion-title"><i class="fa fa-search"></i> Click Here To Search</a>
+				<div class="accordion-content" data-tab-content>
+					<form class="search-frm">
+						<input type="hidden" name="last_name_sav" value=""/>
+						<input type="hidden" name="first_name_sav" value=""/>
+						<input type="hidden" name="email_sav" value=""/>
+						<input type="hidden" name="role_sav" value=""/>
+						<?php if (!$can_view_leaders) { ?>
+						<input class="role" type="hidden" name="role" value="all"/>
+						<?php } ?>
+						<div>
+							<div class="row">
+								<div class="small-12 medium-3 columns">
+                        			<label>Last Name
+										<input type="text" name="last_name"/>
+                        			</label>
+                    			</div>
+								<div class="small-12 medium-3 columns">
+                        			<label>First Name
+										<input type="text" name="first_name"/>
+                        			</label>
+                    			</div>
+								<div class="small-12 medium-3 columns">
+                        			<label>Email
+										<input type="text" name="email"/>
+                        			</label>
+                    			</div>
+								<?php if ($can_view_leaders) { ?>
+								<div class="small-12 medium-3 columns">
+                                	<label>Show
+							        	<select class="role">
+											<option value="all" selected>All Members</option>
+											<option value="ride_leader">Ride Leaders Only</option>
+                                        </select>                                
+                                	</label>
+                            	</div>
+								<?php } ?>
+							</div>
+							<div class="row column">
+								<input class="accent button" type="submit" value="Search"/>
+								<input class="reset-btn accent button" type="button" value="Reset"/>
+							</div>
+						</div>
+					</form>
+				</div>
+			</li>
+		</ul>
+	</div>
+	<div id="pwtc-member-list-div"></div>
+	<?php
+			return ob_get_clean();
+		}
+	}
 
 	// Generates the [pwtc_member_statistics] shortcode.
 	public static function shortcode_member_statistics($atts) {
@@ -460,9 +777,323 @@ class PwtcMembers {
 		return ob_get_clean();
 	}
 
+	// Generates the [pwtc_member_leader_contact] shortcode.
+	public static function shortcode_member_leader_contact($atts) {
+		$current_user = wp_get_current_user();
+		if ( 0 == $current_user->ID ) {
+			ob_start();
+			?>
+			<div class="callout warning"><p>You must be logged in to edit your ride leader contact information.</p></div>		
+			<?php
+			return ob_get_clean();
+		}
+		$userid = $current_user->ID;
+		$user_info = get_userdata( $userid );
+		if (!in_array('ride_leader', $user_info->roles)) {
+			ob_start();
+			?>
+			<div class="callout warning"><p>You must be a ride leader to edit your contact information.</p></div>		
+			<?php
+			return ob_get_clean();
+		}
+		if (isset($_POST['use_contact_email'])) {
+			if ($_POST['use_contact_email'] == 'yes') {
+				update_field('use_contact_email', true, 'user_'.$userid);
+			}
+			else {
+				update_field('use_contact_email', false, 'user_'.$userid);
+			}
+		}
+		if (isset($_POST['contact_email'])) {
+			update_field('contact_email', sanitize_email($_POST['contact_email']), 'user_'.$userid);
+		}
+		if (isset($_POST['voice_phone'])) {
+			update_field('cell_phone', pwtc_members_format_phone_number($_POST['voice_phone']), 'user_'.$userid);
+		}
+		if (isset($_POST['text_phone'])) {
+			update_field('home_phone', pwtc_members_format_phone_number($_POST['text_phone']), 'user_'.$userid);
+		}
+		$voice_phone = pwtc_members_format_phone_number(get_field('cell_phone', 'user_'.$userid));
+		$text_phone = pwtc_members_format_phone_number(get_field('home_phone', 'user_'.$userid));
+		$contact_email = get_field('contact_email', 'user_'.$userid);
+		$use_contact_email = get_field('use_contact_email', 'user_'.$userid);
+		ob_start();
+		?>
+		<div class="callout">
+			<form method="POST">
+				<div class="row">
+					<div class="small-12 medium-6 columns">
+						<label>Use Contact Email?
+							<select name="use_contact_email">
+								<option value="no" <?php echo $use_contact_email ? '': 'selected'; ?>>No, use account email instead</option>
+								<option value="yes"  <?php echo $use_contact_email ? 'selected': ''; ?>>Yes</option>
+							</select>
+						</label>
+					</div>
+					<div class="small-12 medium-6 columns">
+						<label><i class="fa fa-envelope"></i> Contact Email
+							<input type="text" name="contact_email" value="<?php echo $contact_email; ?>"/>
+						</label>
+					</div>
+					<div class="small-12 medium-6 columns">
+						<label><i class="fa fa-phone"></i> Contact Voice Phone
+							<input type="text" name="voice_phone" value="<?php echo $voice_phone; ?>"/>
+						</label>
+					</div>
+					<div class="small-12 medium-6 columns">
+						<label><i class="fa fa-mobile"></i> Contact Text Phone
+							<input type="text" name="text_phone" value="<?php echo $text_phone; ?>"/>
+						</label>
+					</div>
+				</div>
+				<div class="row column clearfix">
+					<input class="button float-left" type="submit" value="Submit"/>
+				</div>
+			</form>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
 	/*************************************************************/
 	/* AJAX request/response callback functions
 	/*************************************************************/
+
+    public static function member_lookup_callback() {
+		$current_user = wp_get_current_user();
+		if ( 0 == $current_user->ID ) {
+			$response = array(
+				'error' => 'Member fetch failed - user access denied.'
+			);		
+		}
+		else if (isset($_POST['limit'])) {
+			$exclude = false;
+			$hide = false;
+			if (isset($_POST['privacy'])) {
+				if ($_POST['privacy'] == 'exclude') {
+					$exclude = true;
+				}
+				else if ($_POST['privacy'] == 'hide') {
+					$hide = true;
+				}
+			}
+			$query_args = self::get_user_query_args($exclude);
+
+			$limit = intval($_POST['limit']);
+			$query_args['number'] = $limit;
+
+			$page_number = 1;
+			if (isset($_POST['page_number'])) {
+				$page_number = intval($_POST['page_number']);
+			}
+			if ($page_number == 1) {
+				$offset = 0;  
+			}
+			else {
+				$offset = ($page_number-1)*$limit;
+			}
+			$query_args['offset'] = $offset;
+
+			$member_names = [];
+			$user_query = new WP_User_Query( $query_args );
+			$members = $user_query->get_results();
+			if ( !empty($members) ) {
+				foreach ( $members as $member ) {
+					$member_info = get_userdata( $member->ID );
+					if ($hide and get_field('directory_excluded', 'user_'.$member->ID)) {
+						$email = '*****';
+						$phone = '*****';
+					}
+					else {
+						if (!empty($member_info->user_email)) {
+							$email = '<a href="mailto:' . $member_info->user_email . '">' . $member_info->user_email . '</a>';
+						}
+						else {
+							$email = '';
+						}
+						if (!empty($member_info->billing_phone)) {
+							$phone = '<a href="tel:' . 
+								pwtc_mapdb_strip_phone_number($member_info->billing_phone) . '">' . 
+								pwtc_mapdb_format_phone_number($member_info->billing_phone) . '</a>';
+						}
+						else {
+							$phone = '';
+						}
+					}
+					$member_names[] = [
+						'ID' => $member->ID,
+						'first_name' => $member_info->first_name,
+						'last_name' => $member_info->last_name,
+						'email' => $email,
+						'phone' => $phone,
+						'is_expired' => in_array('expired_member', $member_info->roles),
+						'is_ride_leader' => in_array('ride_leader', $member_info->roles)
+					];
+				}
+			}
+			
+			$total_users = $user_query->total_users;
+			$total_pages = ceil($user_query->total_users/$limit);
+
+			$response = array(
+				'members' => $member_names,
+				'total_pages' => $total_pages,
+				'page_number' => $page_number,
+				'total_users' => $total_users
+			);
+		}
+		else {
+			$response = array(
+				'error' => 'Member fetch failed - AJAX arguments missing.'
+			);		
+		}
+        echo wp_json_encode($response);
+        wp_die();
+	}
+
+	public static function get_user_query_args($exclude = false) {
+        $query_args = [
+            'meta_key' => 'last_name',
+            'orderby' => 'meta_value',
+			'order' => 'ASC',
+			'role__in' => ['current_member', 'expired_member']
+		];
+
+		if ($exclude) {
+			if (!isset($query_args['meta_query'])) {
+				$query_args['meta_query'] = [];
+			}
+			$query_args['meta_query'][] = [
+				'relation' => 'OR',
+				[
+					'key'     => 'directory_excluded',
+					'value'   => '0',
+					'compare' => '='   	
+				],
+				[
+					'key'     => 'directory_excluded',
+					'compare' => 'NOT EXISTS'   	
+				]
+			];
+		}
+
+		if (isset($_POST['first_name'])) {
+			if (!isset($query_args['meta_query'])) {
+				$query_args['meta_query'] = [];
+			}
+			$query_args['meta_query'][] = [
+				'key'     => 'first_name',
+				'value'   => $_POST['first_name'],
+				'compare' => 'LIKE'   
+			];
+		}
+
+		if (isset($_POST['last_name'])) {
+			if (!isset($query_args['meta_query'])) {
+				$query_args['meta_query'] = [];
+			}
+			$query_args['meta_query'][] = [
+				'key'     => 'last_name',
+				'value'   => $_POST['last_name'],
+				'compare' => 'LIKE'   
+			];
+		}
+
+		if (isset($_POST['email'])) {
+			$query_args['search'] = '*' . esc_attr($_POST['email']) . '*';
+			$query_args['search_columns'] = array( 'user_email' );
+		}	
+
+		if (isset($_POST['role'])) {
+			$role = $_POST['role'];
+			if ($role != 'all') {
+				if (substr($role, 0, 1) === "!") {
+					$not_role = substr($role, 1, strlen($role)-1);
+					if (isset($query_args['role__not_in'])) {
+						$query_args['role__not_in'][] = $not_role;
+					}
+					else {
+						$query_args['role__not_in'] = [$not_role];
+					}
+				}
+				else {
+					$query_args['role__in'] = [$role];
+				}
+			}
+		}
+
+		return $query_args;
+	}
+
+	public static function member_fetch_address_callback() {
+		if (!current_user_can('manage_options')) {
+			$response = array(
+				'error' => 'Address fetch failed - user access denied.'
+			);		
+		}
+		else if (isset($_POST['userid'])) {
+			$userid = intval($_POST['userid']);
+			$member_info = get_userdata($userid);
+			if ($member_info === false) {
+				$response = array(
+					'userid' => $userid,
+					'error' => 'Address fetch failed - user ID ' . $userid . ' not valid.'
+				);
+			}
+			else {
+				$family = '';
+				if (function_exists('wc_memberships_for_teams_get_teams')) {
+					$teams = wc_memberships_for_teams_get_teams($userid);
+					if ($teams && !empty($teams)) {
+						foreach ( $teams as $team ) {
+							$family .= ' ' . $team->get_name();
+							if ($team->is_user_owner($userid)) {
+								$family .= ' (owner)';
+							}
+						}
+					}
+				}
+				$valid_member = false;
+				if (function_exists('wc_memberships_get_user_memberships')) {
+					$memberships = wc_memberships_get_user_memberships($userid);
+					if (!empty($memberships)) {
+						$valid_member = true;
+					}
+				}		
+				$riderid = get_field('rider_id', 'user_'.$userid);
+				if (!$riderid) {
+					$riderid = '';
+				}
+				$phone = get_user_meta($userid, 'billing_phone', true);
+				if (!empty($phone)) {
+					$phone = pwtc_members_format_phone_number($phone);
+				}
+				$response = array(
+					'userid' => $userid,
+					'first_name' => $member_info->first_name,
+					'last_name' => $member_info->last_name,
+					'email' => $member_info->user_email,
+					'riderid' => $riderid,
+					'street1' => get_user_meta($userid, 'billing_address_1', true),
+					'street2' => get_user_meta($userid, 'billing_address_2', true), 
+					'city' => get_user_meta($userid, 'billing_city', true), 
+					'state' => get_user_meta($userid, 'billing_state', true), 
+					'country' => get_user_meta($userid, 'billing_country', true), 
+					'zipcode' => get_user_meta($userid, 'billing_postcode', true), 
+					'phone' => $phone,
+					'family' => $family,
+					'valid_member' => $valid_member
+				);
+			}
+		}
+		else {
+			$response = array(
+				'error' => 'Address fetch failed - AJAX arguments missing.'
+			);		
+		}
+		echo wp_json_encode($response);
+        wp_die();
+	}
 
 	/*************************************************************/
 	/* Utility functions.
