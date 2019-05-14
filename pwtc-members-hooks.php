@@ -21,9 +21,9 @@ if ( function_exists('acf_add_local_field_group') ) {
                 'default_value' => 0,
             ),
             array (
-                'key' => 'field_bcc_membership_captain',
-                'label' => 'Bcc Membership Captain',
-                'name' => 'bcc_membership_captain',
+                'key' => 'field_bcc_membership_secretary',
+                'label' => 'Bcc Membership Secretary',
+                'name' => 'bcc_membership_secretary',
                 'type' => 'true_false',
                 'instructions' => '',
                 'required' => 0,

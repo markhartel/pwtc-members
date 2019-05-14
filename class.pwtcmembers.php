@@ -219,7 +219,7 @@ class PwtcMembers {
 		$headers = array(
 			'Content-type: text/html;charset=utf-8'
 		);
-		if (get_field('bcc_membership_captain', 'option')) {
+		if (get_field('bcc_membership_secretary', 'option')) {
 			$headers[] = 'Bcc: ' . $bcc;
 		}
 		wp_mail($to, $subject, $message, $headers);
