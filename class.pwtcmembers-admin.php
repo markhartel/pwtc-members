@@ -14,9 +14,23 @@ class PwtcMembers_Admin {
         self::$initiated = true;
         
         /* Register admin menu creation callbacks */
-        add_action( 'admin_menu', array( 'PwtcMembers_Admin', 'plugin_menu' ) );
+		add_action( 'admin_menu', array( 'PwtcMembers_Admin', 'plugin_menu' ) );
+		
+		/* Register script and style enqueue callbacks */
+		add_action( 'admin_enqueue_scripts', array( 'PwtcMembers_Admin', 'load_admin_scripts' ) );
+	
+	}  
 
-    }  
+	/*************************************************************/
+	/* Script and style enqueue callback functions               */
+	/*************************************************************/
+
+	public static function load_admin_scripts($hook) {
+		if (!strpos($hook, "pwtc_members")) {
+            return;
+        }
+		wp_enqueue_style('pwtc_members_report_css');
+	}
     
     /* Admin menu and pages creation functions */
 
