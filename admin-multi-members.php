@@ -10,7 +10,6 @@ else {
     $results = PwtcMembers::fetch_users_with_multi_memberships();
 ?>
     <div>
-        <p>Under construction!</p>
         <?php if (empty($results)) { ?>
         <p>No users with multiple memberships found.</p>
         <?php } else { ?>

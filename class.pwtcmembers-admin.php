@@ -28,8 +28,10 @@ class PwtcMembers_Admin {
 	public static function load_admin_scripts($hook) {
 		if (!strpos($hook, "pwtc_members")) {
             return;
-        }
-		wp_enqueue_style('pwtc_members_report_css');
+		}
+        wp_enqueue_style('pwtc_members_report_css', 
+			PWTC_MEMBERS__PLUGIN_URL . 'reports-style.css', array(),
+			filemtime(PWTC_MEMBERS__PLUGIN_DIR . 'reports-style.css'));
 	}
     
     /* Admin menu and pages creation functions */
