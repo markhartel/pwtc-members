@@ -53,7 +53,8 @@ class PwtcMembers_Admin {
     	$menu_slug = 'pwtc_members_export_users';
     	$capability = 'manage_options';
     	$function = array( 'PwtcMembers_Admin', 'page_export_users');
-		add_submenu_page($parent_menu_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
+		$page = add_submenu_page($parent_menu_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
+		add_action('load-' . $page, array('PwtcMembers_Admin','download_user_csv'));
 
         $page_title = $plugin_options['plugin_menu_label'] . ' - Multiple Memberships';
     	$menu_title = 'Multi Members';
@@ -78,6 +79,68 @@ class PwtcMembers_Admin {
 		$plugin_options = PwtcMembers::get_plugin_options();
 		$capability = 'manage_options';
 		include('admin-multi-members.php');
+	}
+
+	public static function download_user_csv() {
+		if (current_user_can('manage_options')) {
+			if (isset($_POST['includes']) and isset($_POST['excludes']) and isset($_POST['riderid']) and isset($_POST['file'])) {
+				$query_args = [
+					'meta_key' => 'last_name',
+					'orderby' => 'meta_value',
+					'order' => 'ASC'
+				];
+				$includes = self::parse_role_list($_POST['includes']);
+				if (!empty($includes)) {
+					$query_args['role__in'] = $includes;
+				}
+				$excludes = self::parse_role_list($_POST['excludes']);	
+				if (!empty($excludes)) {
+					$query_args['role__not_in'] = $excludes;
+				}
+				if ($_POST['riderid'] == 'not_set') {
+					$query_args['meta_query'] = [];
+					$query_args['meta_query'][] = [
+						'relation' => 'OR',
+						[
+							'key'     => 'rider_id',
+							'compare' => 'NOT EXISTS' 
+						],
+						[
+							'key'     => 'rider_id',
+							'value'   => ''    
+						] 
+					];			
+				}
+				else if ($_POST['riderid'] == 'set') {
+
+				}
+				$today = date('Y-m-d', current_time('timestamp'));
+				header('Content-Description: File Transfer');
+				header("Content-type: text/csv");
+				header("Content-Disposition: attachment; filename={$today}_{$_POST['file']}.csv");
+				$fp = fopen('php://output', 'w');
+				fputcsv($fp, ['Username', 'Email', 'First Name', 'Last Name', 'User ID']);
+				$user_query = new WP_User_Query( $query_args );
+				$members = $user_query->get_results();
+				if ( !empty($members) ) {
+					foreach ( $members as $member ) {
+						fputcsv($fp, [$member->user_login, $member->user_email, $member->first_name, $member->last_name, $member->ID]);
+					}
+				}
+				fclose($fp);
+				die;
+			}
+		}
+	}
+
+	public static function parse_role_list($roles) {
+		$list = [];
+		$tok = strtok($roles, " ");
+		while ($tok !== false) {
+			$list[] = $tok;
+			$tok = strtok(" ");
+		}
+		return $list;
 	}
 
 }

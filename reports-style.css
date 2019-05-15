@@ -20,7 +20,14 @@ body.pwtc-members-waiting * {
     box-sizing: border-box;
     margin: 4px 0;
   }
-  
+
+  .pwtc-members-stacked-form textarea {
+    width: 100%;
+    display: inline-block;
+    box-sizing: border-box;
+    margin: 4px 0;
+  }
+
   .pwtc-members-stacked-form select {
     width: 100%;
     display: inline-block;
