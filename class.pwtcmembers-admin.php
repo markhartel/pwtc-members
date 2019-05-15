@@ -18,6 +18,9 @@ class PwtcMembers_Admin {
 		
 		/* Register script and style enqueue callbacks */
 		add_action( 'admin_enqueue_scripts', array( 'PwtcMembers_Admin', 'load_admin_scripts' ) );
+
+		add_action( 'wp_ajax_pwtc_members_fetch_query', 
+			array( 'PwtcMembers_Admin', 'fetch_query_callback') );
 	
 	}  
 
@@ -84,53 +87,98 @@ class PwtcMembers_Admin {
 	public static function download_user_csv() {
 		if (current_user_can('manage_options')) {
 			if (isset($_POST['includes']) and isset($_POST['excludes']) and isset($_POST['riderid']) and isset($_POST['file'])) {
-				$query_args = [
-					'meta_key' => 'last_name',
-					'orderby' => 'meta_value',
-					'order' => 'ASC'
-				];
-				$includes = self::parse_role_list($_POST['includes']);
-				if (!empty($includes)) {
-					$query_args['role__in'] = $includes;
-				}
-				$excludes = self::parse_role_list($_POST['excludes']);	
-				if (!empty($excludes)) {
-					$query_args['role__not_in'] = $excludes;
-				}
-				if ($_POST['riderid'] == 'not_set') {
-					$query_args['meta_query'] = [];
-					$query_args['meta_query'][] = [
-						'relation' => 'OR',
-						[
-							'key'     => 'rider_id',
-							'compare' => 'NOT EXISTS' 
-						],
-						[
-							'key'     => 'rider_id',
-							'value'   => ''    
-						] 
-					];			
-				}
-				else if ($_POST['riderid'] == 'set') {
-
-				}
-				$today = date('Y-m-d', current_time('timestamp'));
-				header('Content-Description: File Transfer');
-				header("Content-type: text/csv");
-				header("Content-Disposition: attachment; filename={$today}_{$_POST['file']}.csv");
-				$fp = fopen('php://output', 'w');
-				fputcsv($fp, ['Username', 'Email', 'First Name', 'Last Name', 'User ID']);
-				$user_query = new WP_User_Query( $query_args );
-				$members = $user_query->get_results();
-				if ( !empty($members) ) {
-					foreach ( $members as $member ) {
-						fputcsv($fp, [$member->user_login, $member->user_email, $member->first_name, $member->last_name, $member->ID]);
+				if (!empty($_POST['file'])) {
+					$details = isset($_POST['details']) and $_POST['details'] == 'true' ? true : false;
+					$query_args = [
+						'meta_key' => 'last_name',
+						'orderby' => 'meta_value',
+						'order' => 'ASC'
+					];
+					$includes = self::parse_role_list($_POST['includes']);
+					if (!empty($includes)) {
+						$query_args['role__in'] = $includes;
 					}
+					$excludes = self::parse_role_list($_POST['excludes']);	
+					if (!empty($excludes)) {
+						$query_args['role__not_in'] = $excludes;
+					}
+					if ($_POST['riderid'] == 'not_set') {
+						$query_args['meta_query'] = [];
+						$query_args['meta_query'][] = [
+							'relation' => 'OR',
+							[
+								'key'     => 'rider_id',
+								'compare' => 'NOT EXISTS' 
+							],
+							[
+								'key'     => 'rider_id',
+								'value'   => ''    
+							] 
+						];			
+					}
+					else if ($_POST['riderid'] == 'set') {
+						$query_args['meta_query'] = [];
+						$query_args['meta_query'][] = [
+							'relation' => 'AND',
+							[
+								'key'     => 'rider_id',
+								'compare' => 'EXISTS' 
+							],
+							[
+								'key'     => 'rider_id',
+								'value'   => '',
+								'compare' => '!='   
+							] 
+						];			
+					}
+					$today = date('Y-m-d', current_time('timestamp'));
+					header('Content-Description: File Transfer');
+					header("Content-type: text/csv");
+					header("Content-Disposition: attachment; filename={$today}_{$_POST['file']}.csv");
+					$fp = fopen('php://output', 'w');
+					fputcsv($fp, self::get_download_csv_labels($details));
+					$user_query = new WP_User_Query( $query_args );
+					$members = $user_query->get_results();
+					if ( !empty($members) ) {
+						foreach ( $members as $member ) {
+							fputcsv($fp, self::get_download_csv_data($member, $details));
+						}
+					}
+					fclose($fp);
+					die;
 				}
-				fclose($fp);
-				die;
 			}
 		}
+	}
+
+	public static function fetch_query_callback() {
+		if (!isset($_POST['query'])) {
+			$response = array(
+				'error' => 'Input parameters needed to fetch query are missing.'
+			);
+			echo wp_json_encode($response);	
+		}
+		else {
+			$queries = self::fetch_canned_queries();
+			$query = $queries[$_POST['query']];
+			if ($query) {
+				$response = array(
+					'label' => $query['label'],
+					'includes' => $query['includes'],
+					'excludes' => $query['excludes'],
+					'riderid' => $query['riderid'],
+					'file' => $query['file']
+				);
+				echo wp_json_encode($response);	
+			}
+			else {
+				$response = array(
+					'error' => 'Canned query not found.'
+				);
+				echo wp_json_encode($response);		
+			}
+		}
+		wp_die();
 	}
 
 	public static function parse_role_list($roles) {
@@ -141,6 +189,74 @@ class PwtcMembers_Admin {
 			$tok = strtok(" ");
 		}
 		return $list;
+	}
+
+	public static function fetch_canned_queries() {
+		$results = [
+			'current_members' => self::create_canned_query('Current Members', 'current_member', '', 'off', 'current_members'),
+			'expired_members' => self::create_canned_query('Expired Members', 'expired_member', '', 'off', 'expired_members'),
+			'ride_leaders' => self::create_canned_query('Ride Leaders', 'ride_leader', '', 'off', 'ride_leaders'),
+			'no_riderid' => self::create_canned_query('Members Without Rider IDs', 'current_member expired_member', '', 'not_set', 'no_riderid'),
+			'bogus_users' => self::create_canned_query('Bogus Users', '', 'administrator current_member expired_member customer ride_leader ride_captain statistician qr_editor', 'not_set', 'bogus_users'),
+			'custom_query' => self::create_canned_query('Custom Query', '', '', 'off', '')
+		];
+		return $results;
+	}
+
+	public static function create_canned_query($label, $includes, $excludes, $riderid, $file) {
+		return [
+			'label' => $label,
+			'includes' => $includes,
+			'excludes' => $excludes,
+			'riderid' => $riderid,
+			'file' => $file
+		];
+	}
+
+	public static function get_download_csv_labels($details = false) {
+		$labels = [
+			'Username', 
+			'Email', 
+			'First Name', 
+			'Last Name', 
+			'User ID'
+		];
+		if ($details) {
+			$labels[] = 'Rider ID';
+			$labels[] = 'Address 1';
+			$labels[] = 'Address 2';
+			$labels[] = 'City';
+			$labels[] = 'State';
+			$labels[] = 'Country';
+			$labels[] = 'Postcode';
+			$labels[] = 'Phone';
+		}
+		return $labels;
+	}
+
+	public static function get_download_csv_data($user, $details = false) {
+		$data = [
+			$user->user_login, 
+			$user->user_email, 
+			$user->first_name, 
+			$user->last_name, 
+			$user->ID
+		];
+		if ($details) {
+            $rider_id = get_field('rider_id', 'user_'.$user->ID);
+            if (!$rider_id) {
+                $rider_id = '';
+			}
+			$data[]	= $rider_id;
+			$data[]	= get_user_meta($user->ID, 'billing_address_1', true);
+			$data[]	= get_user_meta($user->ID, 'billing_address_2', true); 
+			$data[]	= get_user_meta($user->ID, 'billing_city', true); 
+			$data[]	= get_user_meta($user->ID, 'billing_state', true); 
+			$data[]	= get_user_meta($user->ID, 'billing_country', true); 
+			$data[]	= get_user_meta($user->ID, 'billing_postcode', true);
+			$data[]	= pwtc_members_format_phone_number(get_user_meta($user->ID, 'billing_phone', true)); 
+		}
+		return $data;		
 	}
 
 }
