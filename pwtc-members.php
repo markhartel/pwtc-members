@@ -25,3 +25,8 @@ require_once( PWTC_MEMBERS__PLUGIN_DIR . 'pwtc-members-hooks.php' );
 require_once( PWTC_MEMBERS__PLUGIN_DIR . 'class.pwtcmembers.php' );
 
 add_action( 'init', array( 'PwtcMembers', 'init' ) );
+
+if ( is_admin() ) {
+	require_once( PWTC_MEMBERS__PLUGIN_DIR . 'class.pwtcmembers-admin.php' );
+	add_action( 'init', array( 'PwtcMembers_Admin', 'init' ) );
+}

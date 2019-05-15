@@ -41,6 +41,17 @@ class PwtcMembers {
 		add_action( 'wc_memberships_grant_membership_access_from_purchase', 
 			array( 'PwtcMembers', 'user_membership_granted_callback' ), 10, 2);
 
+		/*
+		add_action('wc_memberships_user_membership_saved', 
+			array('PwtcMembers', 'membership_created_callback'), 10, 2);
+		add_action('wc_memberships_user_membership_created', 
+			array('PwtcMembers', 'membership_created_callback'), 10, 2);
+		add_action('wc_memberships_user_membership_deleted', 
+			array('PwtcMembers', 'membership_deleted_callback'));
+		add_action('wc_memberships_for_teams_team_saved', 
+			array('PwtcMembers', 'team_created_callback'));
+		*/
+
 		/* Register shortcode callbacks */
 
 		add_shortcode('pwtc_member_directory', 
@@ -235,6 +246,98 @@ class PwtcMembers {
 			$headers[] = 'Bcc: ' . $bcc;
 		}
 		wp_mail($to, $subject, $message, $headers);
+	}
+
+	public static function membership_created_callback($membership_plan, $args = array()) {
+		$user_membership_id = isset($args['user_membership_id']) ? absint($args['user_membership_id']) : null;
+		$user_id = isset($args['user_id']) ? absint($args['user_id']) : null;
+
+		if (!$user_membership_id) {
+			return;
+		}
+		if (!$user_id) {
+			return;
+		}
+
+		$user_membership = wc_memberships_get_user_membership($user_membership_id);
+		if (!$user_membership) {
+			return;			
+		}
+		
+		$user_data = get_userdata($user_id);
+		if (!$user_data) {
+			return;			
+		}
+
+		if ($user_membership->get_status() == 'auto-draft' or $user_membership->get_status() == 'trash') {
+			return;
+		}
+
+		if (!in_array('customer', $user_data->roles)) {
+			$user_data->add_role('customer');
+		}
+
+		if (pwtc_members_is_expired($user_membership)) {
+			if (!in_array('expired_member', $user_data->roles)) {
+				$user_data->add_role('expired_member');
+			}
+			if (in_array('current_member', $user_data->roles)) {
+				$user_data->remove_role('current_member');
+			}
+		}
+		else {
+			if (!in_array('current_member', $user_data->roles)) {
+				$user_data->add_role('current_member');
+			}
+			if (in_array('expired_member', $user_data->roles)) {
+				$user_data->remove_role('expired_member');
+			}
+		}
+	}
+
+	public static function team_created_callback($team) {
+		$expired = $team->is_membership_expired();
+		$user_memberships = $team->get_user_memberships();
+
+		foreach ( $user_memberships as $user_membership ) {
+			$user_id = $user_membership->get_user_id();
+			$user_data = get_userdata($user_id);
+			if (!$user_data) {
+				continue;			
+			}
+
+			if ($expired) {
+				if (!in_array('expired_member', $user_data->roles)) {
+					$user_data->add_role('expired_member');
+				}
+				if (in_array('current_member', $user_data->roles)) {
+					$user_data->remove_role('current_member');
+				}
+			}
+			else {
+				if (!in_array('current_member', $user_data->roles)) {
+					$user_data->add_role('current_member');
+				}
+				if (in_array('expired_member', $user_data->roles)) {
+					$user_data->remove_role('expired_member');
+				}
+			}
+		}
+	}
+
+	public static function membership_deleted_callback($user_membership) {
+		$user_id = $user_membership->get_user_id();
+		$user_data = get_userdata($user_id);
+		if (!$user_data) {
+			return;			
+		}
+
+		if (in_array('expired_member', $user_data->roles)) {
+			$user_data->remove_role('expired_member');
+		}
+		if (in_array('current_member', $user_data->roles)) {
+			$user_data->remove_role('current_member');
+		}
 	}
 
 	/*************************************************************/
@@ -1179,6 +1282,29 @@ class PwtcMembers {
 	}
 
 	/*************************************************************/
+	/* Plugin options access functions
+	/*************************************************************/
+
+	public static function create_default_plugin_options() {
+		$data = array(
+			'plugin_menu_label' => 'Member Tools',
+			'plugin_menu_location' => 50);
+		add_option('pwtc_members_options', $data);
+	}
+
+	public static function get_plugin_options() {
+		return get_option('pwtc_members_options');
+	}
+
+	public static function delete_plugin_options() {
+		delete_option('pwtc_members_options');
+	}
+
+	public static function update_plugin_options($data) {
+		update_option('pwtc_members_options', $data);
+	}
+
+	/*************************************************************/
 	/* Plugin capabilities management functions.
 	/*************************************************************/
 
@@ -1202,16 +1328,20 @@ class PwtcMembers {
 			deactivate_plugins(plugin_basename(__FILE__));
 			wp_die('PWTC Members plugin requires Wordpress version of at least ' . PWTC_MEMBERS__MINIMUM_WP_VERSION);
 		}
-		self::add_caps_admin_role();
+		if (self::get_plugin_options() === false) {
+			self::create_default_plugin_options();
+		}
+		//self::add_caps_admin_role();
     }
     
 	public static function plugin_deactivation( ) {
 		self::write_log( 'PWTC Members plugin deactivated' );
-		self::remove_caps_admin_role();
+		//self::remove_caps_admin_role();
     }
     
 	public static function plugin_uninstall() {
 		self::write_log( 'PWTC Members plugin uninstall' );	
+		self::delete_plugin_options();
     }
     
     public static function write_log ( $log )  {
