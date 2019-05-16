@@ -18,6 +18,11 @@ class PwtcMembers {
 		add_action( 'wp_enqueue_scripts', 
 			array( 'PwtcMembers', 'load_report_scripts' ) );
 
+		add_action( 'wp_before_admin_bar_render',
+			array( 'PwtcMembers', 'before_admin_bar_render_callback' ) ); 
+
+		add_action( 'admin_init', array( 'PwtcMembers', 'admin_init_callback' ) );
+
 		/* Register woocommerce customization callbacks */
 
 		add_action('woocommerce_checkout_update_user_meta',
@@ -93,6 +98,26 @@ class PwtcMembers {
         wp_enqueue_style('pwtc_members_report_css', 
 			PWTC_MEMBERS__PLUGIN_URL . 'reports-style.css', array(),
 			filemtime(PWTC_MEMBERS__PLUGIN_DIR . 'reports-style.css'));
+	}
+
+	public static function before_admin_bar_render_callback() {
+		global $wp_admin_bar;
+		$current_user = wp_get_current_user();
+		if ( $current_user->ID > 0 ) {
+			if (!in_array('administrator', $current_user->roles)) {
+				$wp_admin_bar->remove_menu('edit-profile');
+			}
+		}	
+	}
+
+	public static function admin_init_callback() {
+		$current_user = wp_get_current_user();
+		if ( $current_user->ID > 0 ) {
+			if (!in_array('administrator', $current_user->roles)) {
+					  remove_submenu_page('users.php', 'profile.php');
+					  remove_menu_page('profile.php');
+			}
+		}	
 	}
 
 	/*************************************************************/

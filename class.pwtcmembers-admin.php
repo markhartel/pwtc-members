@@ -36,7 +36,7 @@ class PwtcMembers_Admin {
 			PWTC_MEMBERS__PLUGIN_URL . 'reports-style.css', array(),
 			filemtime(PWTC_MEMBERS__PLUGIN_DIR . 'reports-style.css'));
 	}
-    
+
     /* Admin menu and pages creation functions */
 
     public static function plugin_menu() {
