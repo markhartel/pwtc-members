@@ -13,7 +13,15 @@ body.pwtc-members-waiting * {
   .pwtc-members-stacked-form {
     width: 200px;    
   }
+
+  .pwtc-members-stacked-form span {
+    font-weight: bold;  
+  }
   
+  .pwtc-members-stacked-form span label {
+    font-weight: normal;  
+  }
+
   .pwtc-members-stacked-form input[type=text] {
     width: 100%;
     display: inline-block;

@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: PWTC Members
-Description: Provides additional shortcodes, admin pages and customizations to augment the WooCommerce membership plugins.
+Description: Provides additional shortcodes, admin pages and customizations to enhance the WooCommerce membership plugins.
 Version: 1.1
 Author: Mark Hartel
 */
