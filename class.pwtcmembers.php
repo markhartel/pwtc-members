@@ -207,7 +207,8 @@ class PwtcMembers {
 			return;			
 		}
 
-		self::send_confirmation_email($membership_plan, $user_data, $membership);
+		$email = self::build_confirmation_email($membership_plan, $user_data, $membership);
+		wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
 	}
 
 	public static function membership_created_callback($membership_plan, $args = array()) {
@@ -1243,7 +1244,7 @@ class PwtcMembers {
 		return $results;
 	}
 
-	public static function send_confirmation_email($membership_plan, $user_data, $membership, $test_email = '') {
+	public static function build_confirmation_email($membership_plan, $user_data, $membership, $test_email = '') {
 		$member_email = $user_data->user_email;
 		$member_name = $user_data->first_name . ' ' . $user_data->last_name;
 
@@ -1311,8 +1312,12 @@ class PwtcMembers {
 			$bcc = $membersec_name . ' <' . $membersec_email . '>';
 			$headers[] = 'Bcc: ' . $bcc;
 		}
-		$status = wp_mail($to, $subject, $message, $headers);
-		return $status;
+		return array(
+			'to' => $to,
+			'subject' => $subject,
+			'message' => $message,
+			'headers' => $headers
+		);
 	}
 
 	/*************************************************************/

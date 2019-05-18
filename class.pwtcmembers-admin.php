@@ -278,32 +278,32 @@ class PwtcMembers_Admin {
 	public static function send_test_email_callback() {
 		if (!current_user_can('manage_options')) {
 			$response = array(
-				'message' => 'Send test email failed - user access denied.'
+				'status' => 'Send test email failed - user access denied.'
 			);		
 		}
-		else if (!isset($_POST['member_email']) or !isset($_POST['email_to'])) {
+		else if (!isset($_POST['member_email'])) {
 			$response = array(
-				'message' => 'Send test email failed - AJAX arguments missing.'
+				'status' => 'Send test email failed - AJAX arguments missing.'
 			);		
 		}
 		else {
 			$user_data = get_user_by( 'email', $_POST['member_email'] );
 			if (!$user_data) {
 				$response = array(
-					'message' => 'Send test email failed - no user with that email.'
+					'status' => 'Send test email failed - no user with that email.'
 				);		
 			}
 			else {
 				if (!function_exists('wc_memberships_get_user_memberships')) {
 					$response = array(
-						'message' => 'Send test email failed - membership system not active.'
+						'status' => 'Send test email failed - membership system not active.'
 					);		
 				}
 				else {
 					$memberships = wc_memberships_get_user_memberships($user_data->ID);
 					if (empty($memberships)) {
 						$response = array(
-							'message' => 'Send test email failed - user has no memberships.'
+							'status' => 'Send test email failed - user has no memberships.'
 						);		
 					}
 					else {
@@ -311,20 +311,32 @@ class PwtcMembers_Admin {
 						$membership_plan = $membership->get_plan();
 						if (!$membership_plan) {
 							$response = array(
-								'message' => 'Send test email failed - membership has no plan.'
+								'status' => 'Send test email failed - membership has no plan.'
 							);			
 						}
 						else {
-							$status = PwtcMembers::send_confirmation_email($membership_plan, $user_data, $membership, $_POST['email_to']);
-							if ($status) {
+							$email_to = $_POST['email_to'];
+							$email = PwtcMembers::build_confirmation_email($membership_plan, $user_data, $membership, $email_to);
+							if (empty($email_to)) {
 								$response = array(
-									'message' => 'Email sent, wp_mail returned true.'
+									'to' => $email['to'],
+									'subject' => $email['subject'],
+									'message' => $email['message'],
+									'headers' => $email['headers']
 								);				
 							}
 							else {
-								$response = array(
-									'message' => 'Email sent, wp_mail returned false.'
-								);				
+								$status = wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
+								if ($status) {
+									$response = array(
+										'status' => 'Email sent, wp_mail returned true.'
+									);				
+								}
+								else {
+									$response = array(
+										'status' => 'Email sent, wp_mail returned false.'
+									);				
+								}
 							}
 						}
 					}
