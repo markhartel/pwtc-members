@@ -306,6 +306,11 @@ class PwtcMembers_Admin {
 							'status' => 'Send test email failed - user has no memberships.'
 						);		
 					}
+					else if (count($memberships) > 1) {
+						$response = array(
+							'status' => 'Send test email failed - user has multiple memberships.'
+						);		
+					}
 					else {
 						$membership = $memberships[0];
 						$membership_plan = $membership->get_plan();
@@ -317,12 +322,16 @@ class PwtcMembers_Admin {
 						else {
 							$email_to = $_POST['email_to'];
 							$email = PwtcMembers::build_confirmation_email($membership_plan, $user_data, $membership, $email_to);
+							$esc_headers = array();
+							foreach ( $email['headers'] as $header ) {
+								$esc_headers[] = esc_html($header);
+							}
 							if (empty($email_to)) {
 								$response = array(
-									'to' => $email['to'],
-									'subject' => $email['subject'],
+									'to' => esc_html($email['to']),
+									'subject' => esc_html($email['subject']),
 									'message' => $email['message'],
-									'headers' => $email['headers']
+									'headers' => $esc_headers
 								);				
 							}
 							else {

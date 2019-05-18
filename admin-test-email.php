@@ -17,6 +17,7 @@ jQuery(document).ready(function($) {
             $('#test-email-section .msg-div').html(res.status);
 		}
 		else {
+            $('#test-email-section .msg-div').empty();
             $('#test-email-section .msg-div').append('<h3>To:</h3><div>' + res.to + '</div>');
             $('#test-email-section .msg-div').append('<h3>Subject:</h3><div>' + res.subject + '</div>');
             $('#test-email-section .msg-div').append('<h3>Message:</h3><div>' + res.message + '</div>');
