@@ -87,7 +87,7 @@ class PwtcMembers {
 
 		add_action( 'wp_ajax_pwtc_member_fetch_address', 
 			array( 'PwtcMembers', 'member_fetch_address_callback') );
-	
+
 	}
 
 	/*************************************************************/
@@ -207,70 +207,7 @@ class PwtcMembers {
 			return;			
 		}
 
-		$member_email = $user_data->user_email;
-		$member_name = $user_data->first_name . ' ' . $user_data->last_name;
-
-		$member_riderid = get_field('rider_id', 'user_'.$user_id);
-		if (!$member_riderid) {
-			$member_riderid = '';
-		}
-
-		$member_type = $membership_plan->get_name(); 
-
-		$member_cost = 'N/A';
-		$product = $membership->get_product(true);
-		if ($product) {
-			$price = $product->get_price();
-			$member_cost = '$' . $price;
-		}
-
-		$team = false;
-		if (function_exists('wc_memberships_for_teams_get_user_membership_team')) {
-			$team = wc_memberships_for_teams_get_user_membership_team( $user_membership_id );
-		}
-
-		if ( $team ) {
-			$message = get_field('family_membership_email', 'option');
-			$member_expires = date('F j, Y', $team->get_local_membership_end_date('timestamp'));
-			$member_starts = date('F j, Y', $team->get_local_date('timestamp'));
-			$member_type = 'Family ' . $member_type;
-		}
-		else {
-			$message = get_field('individual_membership_email', 'option');
-			$member_expires = date('F j, Y', $membership->get_local_end_date('timestamp'));
-			$member_starts = date('F j, Y', $membership->get_local_start_date('timestamp'));
-			$member_type = 'Individual ' . $member_type;
-		}
-		
-		if (!$message) {
-			$message = '';
-		}
-
-		$membersec_email = get_field('membership_captain_email', 'option');
-		$membersec_name = get_field('membership_captain_name', 'option');
-
-		$message = str_replace('{riderid}', $member_riderid, $message);
-		$message = str_replace('{expires}', $member_expires, $message);
-		$message = str_replace('{starts}', $member_starts, $message);
-		$message = str_replace('{email}', $member_email, $message);
-		$message = str_replace('{name}', $member_name, $message);
-		$message = str_replace('{type}', $member_type, $message);
-		$message = str_replace('{cost}', $member_cost, $message);
-
-		$subject = get_field('membership_email_subject', 'option');
-		if (!$subject) {
-			$subject = '';
-		}
-
-		$to = $member_name . ' <' . $member_email . '>';
-		$bcc = $membersec_name . ' <' . $membersec_email . '>';
-		$headers = array(
-			'Content-type: text/html;charset=utf-8'
-		);
-		if (get_field('bcc_membership_secretary', 'option')) {
-			$headers[] = 'Bcc: ' . $bcc;
-		}
-		wp_mail($to, $subject, $message, $headers);
+		self::send_confirmation_email($membership_plan, $user_data, $membership);
 	}
 
 	public static function membership_created_callback($membership_plan, $args = array()) {
@@ -1304,6 +1241,78 @@ class PwtcMembers {
 			$results = $wpdb->get_results($stmt, ARRAY_N);
 		}
 		return $results;
+	}
+
+	public static function send_confirmation_email($membership_plan, $user_data, $membership, $test_email = '') {
+		$member_email = $user_data->user_email;
+		$member_name = $user_data->first_name . ' ' . $user_data->last_name;
+
+		$member_riderid = get_field('rider_id', 'user_'.$user_data->ID);
+		if (!$member_riderid) {
+			$member_riderid = '';
+		}
+
+		$member_type = $membership_plan->get_name(); 
+
+		$member_cost = 'N/A';
+		$product = $membership->get_product(true);
+		if ($product) {
+			$price = $product->get_price();
+			$member_cost = '$' . $price;
+		}
+
+		$team = false;
+		if (function_exists('wc_memberships_for_teams_get_user_membership_team')) {
+			$team = wc_memberships_for_teams_get_user_membership_team( $membership->get_id() );
+		}
+
+		if ( $team ) {
+			$message = get_field('family_membership_email', 'option');
+			$member_expires = date('F j, Y', $team->get_local_membership_end_date('timestamp'));
+			$member_starts = date('F j, Y', $team->get_local_date('timestamp'));
+			$member_type = 'Family ' . $member_type;
+		}
+		else {
+			$message = get_field('individual_membership_email', 'option');
+			$member_expires = date('F j, Y', $membership->get_local_end_date('timestamp'));
+			$member_starts = date('F j, Y', $membership->get_local_start_date('timestamp'));
+			$member_type = 'Individual ' . $member_type;
+		}
+		
+		if (!$message) {
+			$message = '';
+		}
+
+		$membersec_email = get_field('membership_captain_email', 'option');
+		$membersec_name = get_field('membership_captain_name', 'option');
+
+		$message = str_replace('{riderid}', $member_riderid, $message);
+		$message = str_replace('{expires}', $member_expires, $message);
+		$message = str_replace('{starts}', $member_starts, $message);
+		$message = str_replace('{email}', $member_email, $message);
+		$message = str_replace('{name}', $member_name, $message);
+		$message = str_replace('{type}', $member_type, $message);
+		$message = str_replace('{cost}', $member_cost, $message);
+
+		$subject = get_field('membership_email_subject', 'option');
+		if (!$subject) {
+			$subject = '';
+		}
+
+		if (empty($test_email)) {
+			$to = $member_name . ' <' . $member_email . '>';
+		}
+		else {
+			$to = $test_email;
+		}
+		$headers = array();
+		$headers[] = 'Content-type: text/html;charset=utf-8';
+		if (get_field('bcc_membership_secretary', 'option')) {
+			$bcc = $membersec_name . ' <' . $membersec_email . '>';
+			$headers[] = 'Bcc: ' . $bcc;
+		}
+		$status = wp_mail($to, $subject, $message, $headers);
+		return $status;
 	}
 
 	/*************************************************************/

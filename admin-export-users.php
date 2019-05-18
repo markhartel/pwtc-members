@@ -80,9 +80,9 @@ jQuery(document).ready(function($) {
                 <input type="radio" id="not_set" name="riderid" value="not_set"/>
                 <label for="not_set">ID Not Set</label>
             </span>
-            <span>Export File Name</span>
+            <span>Export File Name Suffix</span>
             <input type="text" name="file" value="" required/>
-            <span>Show Details</span>
+            <span>Include User Details</span>
             <span class="pwtc-members-checkbox-wrap">
                 <input type="checkbox" name="details"/>
             </span>

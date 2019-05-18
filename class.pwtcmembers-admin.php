@@ -21,7 +21,10 @@ class PwtcMembers_Admin {
 
 		add_action( 'wp_ajax_pwtc_members_fetch_query', 
 			array( 'PwtcMembers_Admin', 'fetch_query_callback') );
-	
+
+		add_action( 'wp_ajax_pwtc_members_send_test_email', 
+			array( 'PwtcMembers_Admin', 'send_test_email_callback') );
+
 	}  
 
 	/*************************************************************/
@@ -66,6 +69,13 @@ class PwtcMembers_Admin {
     	$function = array( 'PwtcMembers_Admin', 'page_multi_members');
 		add_submenu_page($parent_menu_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
+		$page_title = $plugin_options['plugin_menu_label'] . ' - Test Confirmation Email';
+    	$menu_title = 'Test Confirm Email';
+    	$menu_slug = 'pwtc_members_test_email';
+    	$capability = 'manage_options';
+    	$function = array( 'PwtcMembers_Admin', 'page_test_email');
+		add_submenu_page($parent_menu_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
+
         remove_submenu_page($parent_menu_slug, $parent_menu_slug);
     }
 
@@ -82,6 +92,12 @@ class PwtcMembers_Admin {
 		$plugin_options = PwtcMembers::get_plugin_options();
 		$capability = 'manage_options';
 		include('admin-multi-members.php');
+	}
+
+	public static function page_test_email() {
+		$plugin_options = PwtcMembers::get_plugin_options();
+		$capability = 'manage_options';
+		include('admin-test-email.php');
 	}
 
 	public static function download_user_csv() {
@@ -257,6 +273,66 @@ class PwtcMembers_Admin {
 			$data[]	= pwtc_members_format_phone_number(get_user_meta($user->ID, 'billing_phone', true)); 
 		}
 		return $data;		
+	}
+
+	public static function send_test_email_callback() {
+		if (!current_user_can('manage_options')) {
+			$response = array(
+				'message' => 'Send test email failed - user access denied.'
+			);		
+		}
+		else if (!isset($_POST['member_email']) or !isset($_POST['email_to'])) {
+			$response = array(
+				'message' => 'Send test email failed - AJAX arguments missing.'
+			);		
+		}
+		else {
+			$user_data = get_user_by( 'email', $_POST['member_email'] );
+			if (!$user_data) {
+				$response = array(
+					'message' => 'Send test email failed - no user with that email.'
+				);		
+			}
+			else {
+				if (!function_exists('wc_memberships_get_user_memberships')) {
+					$response = array(
+						'message' => 'Send test email failed - membership system not active.'
+					);		
+				}
+				else {
+					$memberships = wc_memberships_get_user_memberships($user_data->ID);
+					if (empty($memberships)) {
+						$response = array(
+							'message' => 'Send test email failed - user has no memberships.'
+						);		
+					}
+					else {
+						$membership = $memberships[0];
+						$membership_plan = $membership->get_plan();
+						if (!$membership_plan) {
+							$response = array(
+								'message' => 'Send test email failed - membership has no plan.'
+							);			
+						}
+						else {
+							$status = PwtcMembers::send_confirmation_email($membership_plan, $user_data, $membership, $_POST['email_to']);
+							if ($status) {
+								$response = array(
+									'message' => 'Email sent, wp_mail returned true.'
+								);				
+							}
+							else {
+								$response = array(
+									'message' => 'Email sent, wp_mail returned false.'
+								);				
+							}
+						}
+					}
+				}
+			}
+		}
+		echo wp_json_encode($response);
+        wp_die();
 	}
 
 }
