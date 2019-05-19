@@ -1301,16 +1301,15 @@ class PwtcMembers {
 		}
 
 		if (empty($test_email)) {
-			$to = $member_name . ' <' . $member_email . '>';
+			$to = $member_email;
 		}
 		else {
 			$to = $test_email;
 		}
 		$headers = array();
-		$headers[] = 'Content-type: text/html;charset=utf-8';
+		$headers[] = 'Content-type: text/html';
 		if (get_field('bcc_membership_secretary', 'option')) {
-			$bcc = $membersec_name . ' <' . $membersec_email . '>';
-			$headers[] = 'Bcc: ' . $bcc;
+			$headers[] = 'Bcc: ' . $membersec_email;
 		}
 		return array(
 			'to' => $to,

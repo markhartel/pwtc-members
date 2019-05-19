@@ -336,14 +336,15 @@ class PwtcMembers_Admin {
 							}
 							else {
 								$status = wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
+								$sent_to = 'Email sent to ' . esc_html($email['to']);
 								if ($status) {
 									$response = array(
-										'status' => 'Email sent, wp_mail returned true.'
+										'status' => $sent_to . ' - wp_mail returned true.'
 									);				
 								}
 								else {
 									$response = array(
-										'status' => 'Email sent, wp_mail returned false.'
+										'status' => $sent_to . ' - wp_mail returned false.'
 									);				
 								}
 							}
