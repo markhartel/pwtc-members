@@ -32,6 +32,7 @@ jQuery(document).ready(function($) {
         var query = $('#export-user-section .query-slt').val();
         if (query != 'none') {
             $("#export-user-section .query-div").hide();
+            $('#export-user-section .err-msg').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
             var action = '<?php echo admin_url('admin-ajax.php'); ?>';
             var data = {
                 'action': 'pwtc_members_fetch_query',
@@ -40,6 +41,7 @@ jQuery(document).ready(function($) {
             $.post(action, data, load_query_cb);
         }
         else {
+            $("#export-user-section .err-msg").empty();
             $("#export-user-section .query-div").hide();
         }
     });
@@ -49,6 +51,7 @@ jQuery(document).ready(function($) {
 });
 </script>
     <div id="export-user-section">
+        <p>Use this page to export user accounts selected by a query criteria to a CSV file. Criteria consist of user roles to include or exclude and whether or not the Rider ID is set. Use the <strong>File Name</strong> field to specify the name of the exported CSV file. (This file name will be prepended with the current date.) Select the <strong>Include User Details</strong> checkbox to include the user's rider ID, billing address and phone number in the exported data.</p>
         <p>Canned Queries:&nbsp;
             <select class='query-slt'>
                 <option value="none" selected>-- select a query --</option>
@@ -80,7 +83,7 @@ jQuery(document).ready(function($) {
                 <input type="radio" id="not_set" name="riderid" value="not_set"/>
                 <label for="not_set">ID Not Set</label>
             </span>
-            <span>Export File Name Suffix</span>
+            <span>File Name</span>
             <input type="text" name="file" value="" required/>
             <span>Include User Details</span>
             <span class="pwtc-members-checkbox-wrap">

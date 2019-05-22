@@ -317,6 +317,9 @@ class PwtcMembers {
 		else {
 			$can_view_address = current_user_can('manage_options');
 			$can_view_leaders = true;
+			if ($can_view_address) {
+				$a['privacy'] = 'off';
+			}
 			ob_start();
 	?>
 	<script type="text/javascript">

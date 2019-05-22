@@ -53,6 +53,7 @@ jQuery(document).ready(function($) {
 });
 </script>
     <div id="test-email-section">
+        <p>Use this page to test the membership confirmation email mechanism. Leave the <strong>Email Confirmation To</strong> field blank to inspect the confirmation email content, no email will be sent.</p>        
         <div class="pwtc-members-search-sec">
             <form class="pwtc-members-stacked-form email-frm" action="<?php echo admin_url('admin-ajax.php'); ?>" method="POST">
                 <span>Member Email</span>

@@ -10,6 +10,7 @@ else {
     $results = PwtcMembers::fetch_users_with_multi_memberships();
 ?>
     <div>
+        <p>Use this page to detect all user accounts that have multiple memberships. Any such accounts should be corrected by the membership secretary to have only one membership.</p>
         <?php if (empty($results)) { ?>
         <p>No users with multiple memberships found.</p>
         <?php } else { ?>
@@ -19,8 +20,9 @@ else {
             <?php
             foreach ($results as $item) {
                 $userid = $item[0];
-                $user_info = get_userdata( $userid );  
-                $edit_url = admin_url('user-edit.php?user_id=' . $userid);       
+                $user_info = get_userdata( $userid ); 
+                if ($user_info) {
+                    $edit_url = admin_url('user-edit.php?user_id=' . $userid);       
             ?>
 			<tr>
 				<td data-th="ID"><?php echo $userid; ?></td>
@@ -29,7 +31,10 @@ else {
                 <td data-th="Last"><?php echo $user_info->last_name; ?></td>
                 <td data-th="Actions"><a title="Edit user account profile." href="<?php echo $edit_url; ?>" target="_blank">Edit</a></td>
             </tr>
-            <?php } ?>
+            <?php 
+                }
+            } 
+            ?>
         </table>
         <?php } ?>
     </div>
