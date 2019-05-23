@@ -7,13 +7,13 @@ if (!current_user_can($capability)) {
 <?php   
 }
 else {
-    $invalid_members = array();
-    $test_users = self::fetch_member_role_users();
-    $results = PwtcMembers::fetch_users_with_no_memberships();
+    $missing_members = array();
+    $test_users = self::fetch_nonmember_role_users();
+    $results = PwtcMembers::fetch_users_with_memberships();
     foreach ($results as $item) {
         $userid = $item[0];
         if (in_array($userid, $test_users)) {
-            $invalid_members[] = $userid;
+            $missing_members[] = $userid;
         }
     }
 ?>
@@ -22,32 +22,32 @@ jQuery(document).ready(function($) {
 
 	function fix_this_cb(response) {
         var res = JSON.parse(response);
-        $('#invalid-members-section .msg-div').html(res.status);
+        $('#missing-members-section .msg-div').html(res.status);
     }
 
-    $('#invalid-members-section .fix-frm').on('submit', function(evt) {
+    $('#missing-members-section .fix-frm').on('submit', function(evt) {
         evt.preventDefault();
-        $('#invalid-members-section .msg-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
-        var action = $('#invalid-members-section .fix-frm').attr('action');
+        $('#missing-members-section .msg-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
+        var action = $('#missing-members-section .fix-frm').attr('action');
         var data = {
-            'action': 'pwtc_members_fix_invalid_members',
-            'nonce': '<?php echo wp_create_nonce('pwtc_members_fix_invalid_members'); ?>'
+            'action': 'pwtc_members_fix_missing_members',
+            'nonce': '<?php echo wp_create_nonce('pwtc_members_fix_missing_members'); ?>'
         };
         $.post(action, data, fix_this_cb);
     });
 
 });
 </script>
-    <div id="invalid-members-section">
-        <p>Use this page to detect any user accounts that do not have a membership but are erroneously marked with the <code>current_member</code> or <code>expired_member</code> role. If any are found, you are given the option to fix these records.</p>
-        <?php if (empty($invalid_members)) { ?>
-        <p>No users with invalid memberships roles found.</p>
+    <div id="missing-members-section">
+        <p>Use this page to detect any user accounts that have a membership but are missing the proper <code>current_member</code> or <code>expired_member</code> role. If any are found, you are given the option to fix these records.</p>
+        <?php if (empty($missing_members)) { ?>
+        <p>No users with missing memberships roles found.</p>
         <?php } else { ?>
         <table class="pwtc-members-rwd-table">
-            <caption>Users With Invalid Membership Roles</caption>
+            <caption>Users With Missing Membership Roles</caption>
             <tr><th>User ID</th><th>Email</th><th>First Name</th><th>Last Name</th><th>Actions</th></tr>
             <?php
-            foreach ($invalid_members as $item) {
+            foreach ($missing_members as $item) {
                 $userid = $item;
                 $user_info = get_userdata( $userid ); 
                 if ($user_info) {

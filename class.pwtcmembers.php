@@ -1252,7 +1252,17 @@ class PwtcMembers {
 		$stmt = "select ID from " . $wpdb->users . 
 			" where ID not in (select post_author from " . $wpdb->posts . 
 			" where post_type = 'wc_user_membership' and" . 
-			" post_status not in ('auto-draft', 'trash'))";
+			" post_status not in ('auto-draft', 'trash')) order by user_email";
+		$results = $wpdb->get_results($stmt, ARRAY_N);
+		return $results;
+	}
+
+	public static function fetch_users_with_memberships() {
+		global $wpdb;
+		$stmt = "select ID from " . $wpdb->users . 
+			" where ID in (select post_author from " . $wpdb->posts . 
+			" where post_type = 'wc_user_membership' and" . 
+			" post_status not in ('auto-draft', 'trash')) order by user_email";
 		$results = $wpdb->get_results($stmt, ARRAY_N);
 		return $results;
 	}

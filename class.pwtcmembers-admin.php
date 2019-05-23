@@ -25,6 +25,12 @@ class PwtcMembers_Admin {
 		add_action( 'wp_ajax_pwtc_members_send_test_email', 
 			array( 'PwtcMembers_Admin', 'send_test_email_callback') );
 
+		add_action( 'wp_ajax_pwtc_members_fix_invalid_members', 
+			array( 'PwtcMembers_Admin', 'fix_invalid_members_callback') );
+
+		add_action( 'wp_ajax_pwtc_members_fix_missing_members', 
+			array( 'PwtcMembers_Admin', 'fix_missing_members_callback') );
+
 	}  
 
 	/*************************************************************/
@@ -76,6 +82,13 @@ class PwtcMembers_Admin {
     	$function = array( 'PwtcMembers_Admin', 'page_invalid_members');
 		add_submenu_page($parent_menu_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
+		$page_title = $plugin_options['plugin_menu_label'] . ' - Missing Membership Roles';
+    	$menu_title = 'Missing Members';
+    	$menu_slug = 'pwtc_members_missing';
+    	$capability = 'manage_options';
+    	$function = array( 'PwtcMembers_Admin', 'page_missing_members');
+		add_submenu_page($parent_menu_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
+
 		$page_title = $plugin_options['plugin_menu_label'] . ' - Test Confirmation Email';
     	$menu_title = 'Test Confirm Email';
     	$menu_slug = 'pwtc_members_test_email';
@@ -105,6 +118,12 @@ class PwtcMembers_Admin {
 		$plugin_options = PwtcMembers::get_plugin_options();
 		$capability = 'manage_options';
 		include('admin-invalid-members.php');
+	}
+
+	public static function page_missing_members() {
+		$plugin_options = PwtcMembers::get_plugin_options();
+		$capability = 'manage_options';
+		include('admin-missing-members.php');
 	}
 
 	public static function page_test_email() {
@@ -294,71 +313,80 @@ class PwtcMembers_Admin {
 				'status' => 'Send test email failed - user access denied.'
 			);		
 		}
-		else if (!isset($_POST['member_email'])) {
+		else if (!isset($_POST['member_email']) or !isset($_POST['email_to']) or !isset($_POST['nonce'])) {
 			$response = array(
 				'status' => 'Send test email failed - AJAX arguments missing.'
 			);		
 		}
 		else {
-			$user_data = get_user_by( 'email', $_POST['member_email'] );
-			if (!$user_data) {
+			$nonce = $_POST['nonce'];	
+			if (!wp_verify_nonce($nonce, 'pwtc_members_send_test_email')) {
 				$response = array(
-					'status' => 'Send test email failed - no user with that email.'
-				);		
+					'status' => 'Send test email failed - nonce security check failed.'
+				);
+				echo wp_json_encode($response);
 			}
 			else {
-				if (!function_exists('wc_memberships_get_user_memberships')) {
+				$user_data = get_user_by( 'email', $_POST['member_email'] );
+				if (!$user_data) {
 					$response = array(
-						'status' => 'Send test email failed - membership system not active.'
+						'status' => 'Send test email failed - no user with that email.'
 					);		
 				}
 				else {
-					$memberships = wc_memberships_get_user_memberships($user_data->ID);
-					if (empty($memberships)) {
+					if (!function_exists('wc_memberships_get_user_memberships')) {
 						$response = array(
-							'status' => 'Send test email failed - user has no memberships.'
-						);		
-					}
-					else if (count($memberships) > 1) {
-						$response = array(
-							'status' => 'Send test email failed - user has multiple memberships.'
+							'status' => 'Send test email failed - membership system not active.'
 						);		
 					}
 					else {
-						$membership = $memberships[0];
-						$membership_plan = $membership->get_plan();
-						if (!$membership_plan) {
+						$memberships = wc_memberships_get_user_memberships($user_data->ID);
+						if (empty($memberships)) {
 							$response = array(
-								'status' => 'Send test email failed - membership has no plan.'
-							);			
+								'status' => 'Send test email failed - user has no memberships.'
+							);		
+						}
+						else if (count($memberships) > 1) {
+							$response = array(
+								'status' => 'Send test email failed - user has multiple memberships.'
+							);		
 						}
 						else {
-							$email_to = $_POST['email_to'];
-							$email = PwtcMembers::build_confirmation_email($membership_plan, $user_data, $membership, $email_to);
-							$esc_headers = array();
-							foreach ( $email['headers'] as $header ) {
-								$esc_headers[] = esc_html($header);
-							}
-							if (empty($email_to)) {
+							$membership = $memberships[0];
+							$membership_plan = $membership->get_plan();
+							if (!$membership_plan) {
 								$response = array(
-									'to' => esc_html($email['to']),
-									'subject' => esc_html($email['subject']),
-									'message' => $email['message'],
-									'headers' => $esc_headers
-								);				
+									'status' => 'Send test email failed - membership has no plan.'
+								);			
 							}
 							else {
-								$status = wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
-								$sent_to = 'Email sent to ' . esc_html($email['to']);
-								if ($status) {
+								$email_to = $_POST['email_to'];
+								$email = PwtcMembers::build_confirmation_email($membership_plan, $user_data, $membership, $email_to);
+								$esc_headers = array();
+								foreach ( $email['headers'] as $header ) {
+									$esc_headers[] = esc_html($header);
+								}
+								if (empty($email_to)) {
 									$response = array(
-										'status' => $sent_to . ' - wp_mail returned true.'
+										'to' => esc_html($email['to']),
+										'subject' => esc_html($email['subject']),
+										'message' => $email['message'],
+										'headers' => $esc_headers
 									);				
 								}
 								else {
-									$response = array(
-										'status' => $sent_to . ' - wp_mail returned false.'
-									);				
+									$status = wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
+									$sent_to = 'Email sent to ' . esc_html($email['to']);
+									if ($status) {
+										$response = array(
+											'status' => $sent_to . ' - wp_mail returned true.'
+										);				
+									}
+									else {
+										$response = array(
+											'status' => $sent_to . ' - wp_mail returned false.'
+										);				
+									}
 								}
 							}
 						}
@@ -380,37 +408,125 @@ class PwtcMembers_Admin {
 		return $users;
 	}
 
-	public static function foobar_callback() {
+	public static function fetch_nonmember_role_users() {
+		$query_args = [
+			'fields' => 'ID',
+			'role__not_in' => ['current_member', 'expired_member']
+		];
+		$user_query = new WP_User_Query( $query_args );
+		$users = $user_query->get_results();
+		return $users;
+	}
+
+	public static function fix_invalid_members_callback() {
 		if (!current_user_can('manage_options')) {
 			$response = array(
-				'status' => 'TBD failed - user access denied.'
+				'status' => 'Fix failed - user access denied.'
 			);		
 		}
-		else {
-			$count = 0;
-			$test_users = self::fetch_member_role_users();
-			$results = PwtcMembers::fetch_users_with_no_memberships();
-			foreach ($results as $item) {
-				$userid = $item[0];
-				if (in_array($userid, $test_users)) {
-					$user_info = get_userdata( $userid ); 
-					if ($user_info) {
-						$count++;
-						if (in_array('expired_member', $user_info->roles)) {
-							$user_info->remove_role('expired_member');
-						}
-						if (in_array('current_member', $user_info->roles)) {
-							$user_info->remove_role('current_member');
-						}				
-					}	
-				}
-			}
+		else if (!isset($_POST['nonce'])) {
 			$response = array(
-				'status' => 'TBD successful - ' . $count . ' records corrected.'
-			);		
+				'status' => 'Fix failed - AJAX arguments missing.'
+			);
+		}
+		else {
+			$nonce = $_POST['nonce'];	
+			if (!wp_verify_nonce($nonce, 'pwtc_members_fix_invalid_members')) {
+				$response = array(
+					'status' => 'Fix failed - nonce security check failed.'
+				);
+				echo wp_json_encode($response);
+			}
+			else {
+				$count = 0;
+				$test_users = self::fetch_member_role_users();
+				$results = PwtcMembers::fetch_users_with_no_memberships();
+				foreach ($results as $item) {
+					$userid = $item[0];
+					if (in_array($userid, $test_users)) {
+						$user_info = get_userdata( $userid ); 
+						if ($user_info) {
+							$count++;
+							if (in_array('expired_member', $user_info->roles)) {
+								$user_info->remove_role('expired_member');
+							}
+							if (in_array('current_member', $user_info->roles)) {
+								$user_info->remove_role('current_member');
+							}				
+						}	
+					}
+				}
+				$response = array(
+					'status' => 'Fix successful - ' . $count . ' user accounts corrected.'
+				);
+			}		
 		}
 		echo wp_json_encode($response);
         wp_die();
 	}
 
+	public static function fix_missing_members_callback() {
+		if (!current_user_can('manage_options')) {
+			$response = array(
+				'status' => 'Fix failed - user access denied.'
+			);		
+		}
+		else if (!isset($_POST['nonce'])) {
+			$response = array(
+				'status' => 'Fix failed - AJAX arguments missing.'
+			);
+		}
+		else {
+			$nonce = $_POST['nonce'];	
+			if (!wp_verify_nonce($nonce, 'pwtc_members_fix_missing_members')) {
+				$response = array(
+					'status' => 'Fix failed - nonce security check failed.'
+				);
+				echo wp_json_encode($response);
+			}
+			else {
+				$count = 0;
+				$test_users = self::fetch_nonmember_role_users();
+				$results = PwtcMembers::fetch_users_with_memberships();
+				foreach ($results as $item) {
+					$userid = $item[0];
+					if (in_array($userid, $test_users)) {
+						$user_info = get_userdata( $userid ); 
+						if ($user_info) {
+							$memberships = wc_memberships_get_user_memberships($user_info->ID);
+							if (count($memberships) == 1) {
+								$count++;
+								$membership = $memberships[0];
+								if (!in_array('customer', $user_info->roles)) {
+									$user_info->add_role('customer');
+								}
+								if (pwtc_members_is_expired($membership)) {
+									if (!in_array('expired_member', $user_info->roles)) {
+										$user_info->add_role('expired_member');
+									}
+									if (in_array('current_member', $user_info->roles)) {
+										$user_info->remove_role('current_member');
+									}
+								}
+								else {
+									if (!in_array('current_member', $user_info->roles)) {
+										$user_info->add_role('current_member');
+									}
+									if (in_array('expired_member', $user_info->roles)) {
+										$user_info->remove_role('expired_member');
+									}
+								}						
+							}
+						}	
+					}
+				}
+				$response = array(
+					'status' => 'Fix successful - ' . $count . ' user accounts corrected.'
+				);
+			}		
+		}
+		echo wp_json_encode($response);
+        wp_die();
+	}
+	
 }

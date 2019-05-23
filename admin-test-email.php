@@ -37,6 +37,7 @@ jQuery(document).ready(function($) {
             var action = $('#test-email-section .email-frm').attr('action');
             var data = {
                 'action': 'pwtc_members_send_test_email',
+                'nonce': '<?php echo wp_create_nonce('pwtc_members_send_test_email'); ?>',
                 'member_email': member_email,
                 'email_to': email_to
             };
