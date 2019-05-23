@@ -69,6 +69,13 @@ class PwtcMembers_Admin {
     	$function = array( 'PwtcMembers_Admin', 'page_multi_members');
 		add_submenu_page($parent_menu_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
+		$page_title = $plugin_options['plugin_menu_label'] . ' - Invalid Membership Roles';
+    	$menu_title = 'Invalid Members';
+    	$menu_slug = 'pwtc_members_invalid';
+    	$capability = 'manage_options';
+    	$function = array( 'PwtcMembers_Admin', 'page_invalid_members');
+		add_submenu_page($parent_menu_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
+
 		$page_title = $plugin_options['plugin_menu_label'] . ' - Test Confirmation Email';
     	$menu_title = 'Test Confirm Email';
     	$menu_slug = 'pwtc_members_test_email';
@@ -92,6 +99,12 @@ class PwtcMembers_Admin {
 		$plugin_options = PwtcMembers::get_plugin_options();
 		$capability = 'manage_options';
 		include('admin-multi-members.php');
+	}
+
+	public static function page_invalid_members() {
+		$plugin_options = PwtcMembers::get_plugin_options();
+		$capability = 'manage_options';
+		include('admin-invalid-members.php');
 	}
 
 	public static function page_test_email() {
@@ -352,6 +365,49 @@ class PwtcMembers_Admin {
 					}
 				}
 			}
+		}
+		echo wp_json_encode($response);
+        wp_die();
+	}
+
+	public static function fetch_member_role_users() {
+		$query_args = [
+			'fields' => 'ID',
+			'role__in' => ['current_member', 'expired_member']
+		];
+		$user_query = new WP_User_Query( $query_args );
+		$users = $user_query->get_results();
+		return $users;
+	}
+
+	public static function foobar_callback() {
+		if (!current_user_can('manage_options')) {
+			$response = array(
+				'status' => 'TBD failed - user access denied.'
+			);		
+		}
+		else {
+			$count = 0;
+			$test_users = self::fetch_member_role_users();
+			$results = PwtcMembers::fetch_users_with_no_memberships();
+			foreach ($results as $item) {
+				$userid = $item[0];
+				if (in_array($userid, $test_users)) {
+					$user_info = get_userdata( $userid ); 
+					if ($user_info) {
+						$count++;
+						if (in_array('expired_member', $user_info->roles)) {
+							$user_info->remove_role('expired_member');
+						}
+						if (in_array('current_member', $user_info->roles)) {
+							$user_info->remove_role('current_member');
+						}				
+					}	
+				}
+			}
+			$response = array(
+				'status' => 'TBD successful - ' . $count . ' records corrected.'
+			);		
 		}
 		echo wp_json_encode($response);
         wp_die();

@@ -1247,6 +1247,16 @@ class PwtcMembers {
 		return $results;
 	}
 
+	public static function fetch_users_with_no_memberships() {
+		global $wpdb;
+		$stmt = "select ID from " . $wpdb->users . 
+			" where ID not in (select post_author from " . $wpdb->posts . 
+			" where post_type = 'wc_user_membership' and" . 
+			" post_status not in ('auto-draft', 'trash'))";
+		$results = $wpdb->get_results($stmt, ARRAY_N);
+		return $results;
+	}
+
 	public static function build_confirmation_email($membership_plan, $user_data, $membership, $test_email = '') {
 		$member_email = $user_data->user_email;
 		$member_name = $user_data->first_name . ' ' . $user_data->last_name;
