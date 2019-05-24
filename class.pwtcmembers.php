@@ -1342,6 +1342,54 @@ class PwtcMembers {
 		);
 	}
 
+	public static function lookup_user_memberships($memberid, $lastname = '', $firstname = '', $exact = true) {
+		$add_edit_link = current_user_can('manage_options');
+		$users = array();
+		$profiles = pwtc_members_lookup_user($memberid, $lastname, $firstname, $exact);
+		foreach ($profiles as $profile) {
+			$info = get_userdata($profile->ID);
+			$note = '';
+			$expir_date = '';
+			if (function_exists('wc_memberships_get_user_memberships')) {
+				$memberships = wc_memberships_get_user_memberships($profile->ID);
+				if (empty($memberships)) {
+					$note = 'no membership';
+				}
+				else if (count($memberships) > 1) {
+					$note = 'multiple memberships';
+				}
+				else {
+					$expir_date = pwtc_members_get_expiration_date($memberships[0]);
+				}
+			}
+			else {
+				$note = 'cannot access membership';
+			}
+			$role = implode(", ", $info->roles);
+			$riderid = get_field('rider_id', 'user_'.$profile->ID);
+            if (!$riderid) {
+                $riderid = '';
+            }
+			$item = array(
+				'userid' => $profile->ID,
+				'first_name' => trim($info->first_name),
+				'last_name' => trim($info->last_name),
+				'email' => trim($info->user_email),
+				'expir_date' => $expir_date,
+				'note' => $note,
+				'role' => $role,
+				'riderid' => $riderid
+			);
+			if ($add_edit_link) {
+				$href = admin_url('user-edit.php?user_id=' . $profile->ID);
+				$edit_url = '<a title="Edit user account profile." target="_blank" href="' . $href . '">Edit</a>';
+				$item['editurl'] = $edit_url;
+			}
+			$users[] = $item;
+		}
+		return $users;
+	}
+
 	/*************************************************************/
 	/* Plugin options access functions
 	/*************************************************************/

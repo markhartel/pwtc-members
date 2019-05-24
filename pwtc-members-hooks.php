@@ -46,3 +46,76 @@ function pwtc_members_is_expired($membership) {
     }
     return $is_expired;
 }
+
+function pwtc_members_get_expiration_date($membership) {
+    $team = false;
+    if (function_exists('wc_memberships_for_teams_get_user_membership_team')) {
+        $team = wc_memberships_for_teams_get_user_membership_team($membership->get_id());
+    }
+    if ($team) {
+        $datetime = $team->get_local_membership_end_date('mysql');
+        $pieces = explode(' ', $datetime);
+        $exp_date = $pieces[0];
+    }
+    else {
+        if ($membership->has_end_date()) {
+            $datetime = $membership->get_local_end_date('mysql', false);
+            $pieces = explode(' ', $datetime);
+            $exp_date = $pieces[0];
+        }
+        else {
+            $exp_date = '2099-01-01';
+        }
+    }
+    return $exp_date;
+}
+
+function pwtc_members_lookup_user($rider_id, $lastname = '', $firstname = '', $exact = true) {
+    $compare = 'LIKE';
+    if ($exact) {
+        $compare = '=';
+    }
+    $query_args = [
+        'meta_key' => 'last_name',
+        'orderby' => 'meta_value',
+        'order' => 'ASC'
+    ];
+    $query_args['meta_query'] = [];
+    if (!empty($lastname)) {
+        $query_args['meta_query'][] = [
+            'key'     => 'last_name',
+            'value'   => $lastname,
+            'compare' => $compare   
+        ];
+    }
+    if (!empty($firstname)) {
+        $query_args['meta_query'][] = [
+            'key'     => 'first_name',
+            'value'   => $firstname,
+            'compare' => $compare 
+        ];
+    }
+    if (!empty($rider_id)) {
+        $query_args['meta_query'][] = [
+            'key'     => 'rider_id',
+            'value'   => $rider_id,
+            'compare' => $compare 
+        ];
+    }
+    else if (empty($lastname) and empty($firstname)) {
+        $query_args['meta_query'][] = [
+            'relation' => 'OR',
+            [
+                'key'     => 'rider_id',
+                'compare' => 'NOT EXISTS' 
+            ],
+            [
+                'key'     => 'rider_id',
+                'value'   => ''    
+            ] 
+        ];
+    }
+    $user_query = new WP_User_Query( $query_args );
+    $results = $user_query->get_results();
+    return $results;
+}

@@ -31,6 +31,9 @@ class PwtcMembers_Admin {
 		add_action( 'wp_ajax_pwtc_members_fix_missing_members', 
 			array( 'PwtcMembers_Admin', 'fix_missing_members_callback') );
 
+		add_action( 'wp_ajax_pwtc_members_lookup_users', 
+			array( 'PwtcMembers_Admin', 'lookup_users_callback') );
+
 	}  
 
 	/*************************************************************/
@@ -59,6 +62,13 @@ class PwtcMembers_Admin {
     	$icon_url = '';
     	$position = $plugin_options['plugin_menu_location'];
         add_menu_page($page_title, $menu_title, $capability, $parent_menu_slug, $function, $icon_url, $position);
+
+		$page_title = $plugin_options['plugin_menu_label'] . ' - Lookup Users';
+    	$menu_title = 'Lookup Users';
+    	$menu_slug = 'pwtc_members_lookup_users';
+    	$capability = 'manage_options';
+    	$function = array( 'PwtcMembers_Admin', 'page_lookup_users');
+		$page = add_submenu_page($parent_menu_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
         $page_title = $plugin_options['plugin_menu_label'] . ' - Export Users';
     	$menu_title = 'Export Users';
@@ -100,6 +110,12 @@ class PwtcMembers_Admin {
     }
 
     public static function plugin_menu_page() {
+	}
+
+	public static function page_lookup_users() {
+		$plugin_options = PwtcMembers::get_plugin_options();
+		$capability = 'manage_options';
+		include('admin-lookup-users.php');
 	}
 
     public static function page_export_users() {
@@ -536,5 +552,33 @@ class PwtcMembers_Admin {
 		echo wp_json_encode($response);
         wp_die();
 	}
+
+	public static function lookup_users_callback() {
+		if (!current_user_can('manage_options')) {
+			$response = array(
+				'error' => 'User lookup failed - user access denied.'
+			);
+		}
+		else if (!isset($_POST['memberid']) or !isset($_POST['firstname']) or !isset($_POST['lastname']) or !isset($_POST['exact'])) {
+			$response = array(
+				'error' => 'User lookup failed - AJAX arguments missing.'
+			);
+		}
+		else {
+			$memberid = sanitize_text_field($_POST['memberid']);
+			$firstname = sanitize_text_field($_POST['firstname']);
+			$lastname = sanitize_text_field($_POST['lastname']);
+			$exact = $_POST['exact'] == 'true' ? true : false;
+			$users = PwtcMembers::lookup_user_memberships($memberid, $lastname, $firstname, $exact);
+			$response = array(
+				'memberid' => $memberid,
+				'firstname' => $firstname,
+				'lastname' => $lastname,
+				'users' => $users
+			);
+		}
+		echo wp_json_encode($response);
+		wp_die();
+	}	
 	
 }
