@@ -486,6 +486,7 @@ class PwtcMembers_Admin {
 			}
 			else {
 				$count = 0;
+				$multicount = 0;
 				$test_users = self::fetch_nonmember_role_users();
 				$results = PwtcMembers::fetch_users_with_memberships();
 				foreach ($results as $item) {
@@ -517,11 +518,18 @@ class PwtcMembers_Admin {
 									}
 								}						
 							}
+							else if (count($memberships) > 1) {
+								$multicount++;
+							}
 						}	
 					}
 				}
+				$msg = 'Fix successful - ' . $count . ' user accounts corrected.';
+				if ($multicount > 0) {
+					$msg .= ' ' . $multicount . ' user accounts with multiple memberships which were NOT corrected.';
+				}
 				$response = array(
-					'status' => 'Fix successful - ' . $count . ' user accounts corrected.'
+					'status' => $msg
 				);
 			}		
 		}
