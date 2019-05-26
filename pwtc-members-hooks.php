@@ -70,7 +70,7 @@ function pwtc_members_get_expiration_date($membership) {
     return $exp_date;
 }
 
-function pwtc_members_lookup_user($rider_id, $lastname = '', $firstname = '', $exact = true) {
+function pwtc_members_lookup_user($rider_id, $lastname = '', $firstname = '', $email = '', $exact = true) {
     $compare = 'LIKE';
     if ($exact) {
         $compare = '=';
@@ -95,6 +95,14 @@ function pwtc_members_lookup_user($rider_id, $lastname = '', $firstname = '', $e
             'compare' => $compare 
         ];
     }
+    if (!empty($email)) {
+        $str = $email;
+        if (!$exact) {
+            $str = '*' . $str . '*';
+        }
+        $query_args['search'] = $str;
+        $query_args['search_columns'] = array( 'user_email' );
+    }
     if (!empty($rider_id)) {
         $query_args['meta_query'][] = [
             'key'     => 'rider_id',
@@ -102,6 +110,7 @@ function pwtc_members_lookup_user($rider_id, $lastname = '', $firstname = '', $e
             'compare' => $compare 
         ];
     }
+    /*
     else if (empty($lastname) and empty($firstname)) {
         $query_args['meta_query'][] = [
             'relation' => 'OR',
@@ -115,6 +124,7 @@ function pwtc_members_lookup_user($rider_id, $lastname = '', $firstname = '', $e
             ] 
         ];
     }
+    */
     $user_query = new WP_User_Query( $query_args );
     $results = $user_query->get_results();
     return $results;

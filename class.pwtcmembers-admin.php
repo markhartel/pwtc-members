@@ -34,6 +34,9 @@ class PwtcMembers_Admin {
 		add_action( 'wp_ajax_pwtc_members_lookup_users', 
 			array( 'PwtcMembers_Admin', 'lookup_users_callback') );
 
+		add_action( 'wp_ajax_pwtc_members_show_users', 
+			array( 'PwtcMembers_Admin', 'show_users_callback') );
+
 	}  
 
 	/*************************************************************/
@@ -153,48 +156,7 @@ class PwtcMembers_Admin {
 			if (isset($_POST['includes']) and isset($_POST['excludes']) and isset($_POST['riderid']) and isset($_POST['file'])) {
 				if (!empty($_POST['file'])) {
 					$details = isset($_POST['details']) and $_POST['details'] == 'true' ? true : false;
-					$query_args = [
-						'meta_key' => 'last_name',
-						'orderby' => 'meta_value',
-						'order' => 'ASC'
-					];
-					$includes = self::parse_role_list($_POST['includes']);
-					if (!empty($includes)) {
-						$query_args['role__in'] = $includes;
-					}
-					$excludes = self::parse_role_list($_POST['excludes']);	
-					if (!empty($excludes)) {
-						$query_args['role__not_in'] = $excludes;
-					}
-					if ($_POST['riderid'] == 'not_set') {
-						$query_args['meta_query'] = [];
-						$query_args['meta_query'][] = [
-							'relation' => 'OR',
-							[
-								'key'     => 'rider_id',
-								'compare' => 'NOT EXISTS' 
-							],
-							[
-								'key'     => 'rider_id',
-								'value'   => ''    
-							] 
-						];			
-					}
-					else if ($_POST['riderid'] == 'set') {
-						$query_args['meta_query'] = [];
-						$query_args['meta_query'][] = [
-							'relation' => 'AND',
-							[
-								'key'     => 'rider_id',
-								'compare' => 'EXISTS' 
-							],
-							[
-								'key'     => 'rider_id',
-								'value'   => '',
-								'compare' => '!='   
-							] 
-						];			
-					}
+					$query_args = self::get_export_user_query_args();
 					$today = date('Y-m-d', current_time('timestamp'));
 					header('Content-Description: File Transfer');
 					header("Content-type: text/csv");
@@ -213,6 +175,52 @@ class PwtcMembers_Admin {
 				}
 			}
 		}
+	}
+
+	public static function get_export_user_query_args() {
+		$query_args = [
+			'meta_key' => 'last_name',
+			'orderby' => 'meta_value',
+			'order' => 'ASC'
+		];
+		$includes = self::parse_role_list($_POST['includes']);
+		if (!empty($includes)) {
+			$query_args['role__in'] = $includes;
+		}
+		$excludes = self::parse_role_list($_POST['excludes']);	
+		if (!empty($excludes)) {
+			$query_args['role__not_in'] = $excludes;
+		}
+		if ($_POST['riderid'] == 'not_set') {
+			$query_args['meta_query'] = [];
+			$query_args['meta_query'][] = [
+				'relation' => 'OR',
+				[
+					'key'     => 'rider_id',
+					'compare' => 'NOT EXISTS' 
+				],
+				[
+					'key'     => 'rider_id',
+					'value'   => ''    
+				] 
+			];			
+		}
+		else if ($_POST['riderid'] == 'set') {
+			$query_args['meta_query'] = [];
+			$query_args['meta_query'][] = [
+				'relation' => 'AND',
+				[
+					'key'     => 'rider_id',
+					'compare' => 'EXISTS' 
+				],
+				[
+					'key'     => 'rider_id',
+					'value'   => '',
+					'compare' => '!='   
+				] 
+			];			
+		}
+		return $query_args;
 	}
 
 	public static function fetch_query_callback() {
@@ -559,7 +567,7 @@ class PwtcMembers_Admin {
 				'error' => 'User lookup failed - user access denied.'
 			);
 		}
-		else if (!isset($_POST['memberid']) or !isset($_POST['firstname']) or !isset($_POST['lastname']) or !isset($_POST['exact'])) {
+		else if (!isset($_POST['memberid']) or !isset($_POST['firstname']) or !isset($_POST['lastname']) or !isset($_POST['email']) or !isset($_POST['exact'])) {
 			$response = array(
 				'error' => 'User lookup failed - AJAX arguments missing.'
 			);
@@ -568,17 +576,58 @@ class PwtcMembers_Admin {
 			$memberid = sanitize_text_field($_POST['memberid']);
 			$firstname = sanitize_text_field($_POST['firstname']);
 			$lastname = sanitize_text_field($_POST['lastname']);
+			$email = sanitize_text_field($_POST['email']);
 			$exact = $_POST['exact'] == 'true' ? true : false;
-			$users = PwtcMembers::lookup_user_memberships($memberid, $lastname, $firstname, $exact);
+			$users = PwtcMembers::lookup_user_memberships($memberid, $lastname, $firstname, $email, $exact);
 			$response = array(
 				'memberid' => $memberid,
 				'firstname' => $firstname,
 				'lastname' => $lastname,
+				'email' => $email,
 				'users' => $users
 			);
 		}
 		echo wp_json_encode($response);
 		wp_die();
 	}	
-	
+
+	public static function show_users_callback() {
+		if (!current_user_can('manage_options')) {
+			$response = array(
+				'error' => 'User show failed - user access denied.'
+			);
+		}
+		else if (!isset($_POST['includes']) or !isset($_POST['excludes']) or !isset($_POST['riderid'])) {
+			$response = array(
+				'error' => 'User show failed - AJAX arguments missing.'
+			);
+		}
+		else {
+			$query_args = self::get_export_user_query_args();
+			$user_query = new WP_User_Query( $query_args );
+			$members = $user_query->get_results();
+			$users = array();
+			foreach ( $members as $member ) {
+				$rider_id = get_field('rider_id', 'user_'.$member->ID);
+				if (!$rider_id) {
+					$rider_id = '';
+				}	
+				$item = array(
+					'userid' => $member->ID,
+					'first_name' => $member->first_name,
+					'last_name' => $member->last_name,
+					'user_email' => $member->user_email,
+					'user_login' => $member->user_login,
+					'riderid' => $rider_id
+				);
+				$users[] = $item;
+			}
+			$response = array(
+				'users' => $users
+			);
+		}
+		echo wp_json_encode($response);
+		wp_die();		
+	}
+
 }

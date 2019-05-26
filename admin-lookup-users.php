@@ -55,6 +55,7 @@ jQuery(document).ready(function($) {
             $("#user-lookup-section .search-frm input[name='memberid']").val(res.memberid);
             $("#user-lookup-section .search-frm input[name='firstname']").val(res.firstname);
             $("#user-lookup-section .search-frm input[name='lastname']").val(res.lastname);
+            $("#user-lookup-section .search-frm input[name='email']").val(res.email);
             populate_users_table(res.users);
         }
     }
@@ -63,11 +64,12 @@ jQuery(document).ready(function($) {
         var memberid = $("#user-lookup-section .search-frm input[name='memberid']").val().trim();
         var firstname = $("#user-lookup-section .search-frm input[name='firstname']").val().trim();
         var lastname = $("#user-lookup-section .search-frm input[name='lastname']").val().trim();
+        var email = $("#user-lookup-section .search-frm input[name='email']").val().trim();
         var exact = false;
         if ($("#user-lookup-section .search-frm input[name='exact']").is(':checked')) {
             exact = true;
         }
-        if (memberid.length > 0 || lastname.length > 0 || firstname.length > 0) {
+        if (memberid.length > 0 || lastname.length > 0 || firstname.length > 0 || email.length > 0) {
             $('#user-lookup-section .users-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
             var action = $('#user-lookup-section .search-frm').attr('action');
             var data = {
@@ -75,6 +77,7 @@ jQuery(document).ready(function($) {
                 'memberid': memberid,
                 'firstname': firstname,
                 'lastname': lastname,
+                'email': email,
                 'exact': exact
             };
             $.post(action, data, lookup_users_cb);
@@ -100,7 +103,7 @@ jQuery(document).ready(function($) {
 });
 </script>
     <div id="user-lookup-section">
-        <p>Use this page to lookup user accounts by their first and last name or rider ID.</p>
+        <p>Use this page to lookup user accounts by their first/last name, email or rider ID.</p>
         <div class='pwtc-members-search-sec'>
         	<form class="search-frm pwtc-members-stacked-form" action="<?php echo admin_url('admin-ajax.php'); ?>" method="post">
                 <span>Rider ID</span>
@@ -109,6 +112,8 @@ jQuery(document).ready(function($) {
                 <input name="firstname" type="text"/>
                 <span>Last Name</span>
                 <input name="lastname" type="text"/>
+                <span>Email</span>
+                <input name="email" type="text"/>
 		        <span>Exact Match</span>
 		        <span class="pwtc-members-checkbox-wrap">
 			        <input type="checkbox" name="exact" checked/>

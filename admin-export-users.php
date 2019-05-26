@@ -17,13 +17,37 @@ else {
 <script type="text/javascript">
 jQuery(document).ready(function($) { 
 
+	function populate_users_table(users) {
+		$('#export-user-section .users-div').empty();
+        if (users.length > 0) {
+            $('#export-user-section .users-div').append(
+                '<table class="pwtc-members-rwd-table"><tr><th>Username</th><th>Email</th><th>First Name</th><th>Last Name</th><th>User ID</th><th>Rider ID</th></tr></table>');
+            users.forEach(function(item) {
+                $('#export-user-section .users-div table').append(
+                    '<tr userid="' + item.userid + '">' + 
+                    '<td data-th="Username">' + item.user_login + '</td>' + 
+                    '<td data-th="Email">' + item.user_email + '</td>' +
+                    '<td data-th="First Name">' + item.first_name + '</td>' +
+                    '<td data-th="Last Name">' + item.last_name + '</td>' + 
+                    '<td data-th="User ID">' + item.userid + '</td>' + 
+                    '<td data-th="Rider ID">' + item.riderid + '</td>' +
+                    '</tr>');    
+            });
+        }
+        else {
+            $('#export-user-section .users-div').html('No user accounts found.');
+        }
+    }
+
 	function load_query_cb(response) {
         var res = JSON.parse(response);
         if (res.error) {
+            $("#export-user-section .users-div").empty();
             $("#export-user-section .query-div").hide();
             $("#export-user-section .err-msg").html(res.error);
         }
         else {
+            $("#export-user-section .users-div").empty();
             $("#export-user-section .err-msg").empty();
             $("#export-user-section .query-frm textarea[name='includes']").val(res.includes);
             $("#export-user-section .query-frm textarea[name='excludes']").val(res.excludes);
@@ -33,9 +57,20 @@ jQuery(document).ready(function($) {
         }
 	}   
 
+    function show_users_cb(response) {
+        var res = JSON.parse(response);
+        if (res.error) {
+            $('#export-user-section .users-div').html(res.error);
+        }
+        else {
+            populate_users_table(res.users);
+        }
+    }
+
     $('#export-user-section .query-slt').change(function() {
         var query = $('#export-user-section .query-slt').val();
         if (query != 'none') {
+            $("#export-user-section .users-div").empty();
             $("#export-user-section .query-div").hide();
             $('#export-user-section .err-msg').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
             var action = '<?php echo admin_url('admin-ajax.php'); ?>';
@@ -46,8 +81,30 @@ jQuery(document).ready(function($) {
             $.post(action, data, load_query_cb);
         }
         else {
+            $("#export-user-section .users-div").empty();
             $("#export-user-section .err-msg").empty();
             $("#export-user-section .query-div").hide();
+        }
+    });
+
+    $('#export-user-section .query-div .query-frm .show-btn').on('click', function(evt) {
+        evt.preventDefault();
+        var includes = $("#export-user-section .query-frm textarea[name='includes']").val().trim();
+        var excludes = $("#export-user-section .query-frm textarea[name='excludes']").val().trim();
+        var riderid = $("#export-user-section .query-frm input[name='riderid']:checked").val();
+        if (includes.length > 0 || excludes.length > 0) {
+            $('#export-user-section .users-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
+            var action = '<?php echo admin_url('admin-ajax.php'); ?>';
+            var data = {
+                'action': 'pwtc_members_show_users',
+                'includes': includes,
+                'excludes': excludes,
+                'riderid': riderid
+            };
+            $.post(action, data, show_users_cb);
+        }
+        else {
+            $("#export-user-section .users-div").empty();
         }
     });
 
@@ -56,7 +113,7 @@ jQuery(document).ready(function($) {
 });
 </script>
     <div id="export-user-section">
-        <p>Use this page to export user accounts selected by a query criteria to a CSV file. Criteria consist of user roles to include or exclude (separated by a space) and whether or not the Rider ID is set. Here is a list of the currently available roles: <code><?php echo implode(' ', $available_roles); ?></code> Use the <strong>File Name</strong> field to specify the name of the exported CSV file. (This file name will be prepended with the current date.) Select the <strong>Include User Details</strong> checkbox to include the user's rider ID, billing address and phone number in the exported data.</p>
+        <p>Use this page to show or export user accounts selected by a query criteria. Criteria consist of user roles to include or exclude (separated by a space) and whether or not the Rider ID is set. Here is a list of the currently available roles: <code><?php echo implode(' ', $available_roles); ?></code> Use the <strong>CSV File Name</strong> field to specify the name of the exported CSV file. (This file name will be prepended with the current date.) Select the <strong>Include User Details</strong> checkbox to include the user's rider ID, billing address and phone number in the exported data.</p>
         <p>Canned Queries:&nbsp;
             <select class='query-slt'>
                 <option value="none" selected>-- select a query --</option>
@@ -88,15 +145,17 @@ jQuery(document).ready(function($) {
                 <input type="radio" id="not_set" name="riderid" value="not_set"/>
                 <label for="not_set">ID Not Set</label>
             </span>
-            <span>File Name</span>
+            <span>CSV File Name</span>
             <input type="text" name="file" value="" required/>
             <span>Include User Details</span>
             <span class="pwtc-members-checkbox-wrap">
                 <input type="checkbox" name="details"/>
             </span>
-            <input type="submit" value="Export Users" class="button button-primary button-large"/>
+            <input type="button" value="Show Users" class="show-btn button button-primary"/>
+            <input type="submit" value="Export Users" class="button button-primary"/>
         </form>
         </div>
+        <p><div class="users-div"></div></p>
     </div>
 <?php
 }

@@ -1342,10 +1342,10 @@ class PwtcMembers {
 		);
 	}
 
-	public static function lookup_user_memberships($memberid, $lastname = '', $firstname = '', $exact = true) {
+	public static function lookup_user_memberships($memberid, $lastname = '', $firstname = '', $email = '', $exact = true) {
 		$add_edit_link = current_user_can('manage_options');
 		$users = array();
-		$profiles = pwtc_members_lookup_user($memberid, $lastname, $firstname, $exact);
+		$profiles = pwtc_members_lookup_user($memberid, $lastname, $firstname, $email, $exact);
 		foreach ($profiles as $profile) {
 			$info = get_userdata($profile->ID);
 			$note = '';
