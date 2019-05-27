@@ -982,8 +982,10 @@ class PwtcMembers {
 						}
 						if (!empty($member_info->billing_phone)) {
 							$phone = '<a href="tel:' . 
-								pwtc_mapdb_strip_phone_number($member_info->billing_phone) . '">' . 
-								pwtc_mapdb_format_phone_number($member_info->billing_phone) . '</a>';
+								pwtc_members_strip_phone_number($member_info->billing_phone) . 
+								'">' . 
+								pwtc_members_format_phone_number($member_info->billing_phone) .
+								'</a>';
 						}
 						else {
 							$phone = '';
@@ -1126,7 +1128,9 @@ class PwtcMembers {
 				if (function_exists('wc_memberships_get_user_memberships')) {
 					$memberships = wc_memberships_get_user_memberships($userid);
 					if (!empty($memberships)) {
-						$valid_member = true;
+						if (function_exists('pwtc_mileage_get_rider_card_info')) {
+							$valid_member = true;
+						}
 					}
 				}		
 				$riderid = get_field('rider_id', 'user_'.$userid);
