@@ -291,10 +291,10 @@ class PwtcMembers_Admin {
 			'Email', 
 			'First Name', 
 			'Last Name', 
-			'User ID'
+			'User ID',
+			'Rider ID'
 		];
 		if ($details) {
-			$labels[] = 'Rider ID';
 			$labels[] = 'Address 1';
 			$labels[] = 'Address 2';
 			$labels[] = 'City';
@@ -307,19 +307,19 @@ class PwtcMembers_Admin {
 	}
 
 	public static function get_download_csv_data($user, $details = false) {
+		$rider_id = get_field('rider_id', 'user_'.$user->ID);
+		if (!$rider_id) {
+			$rider_id = '';
+		}
 		$data = [
 			$user->user_login, 
 			$user->user_email, 
 			$user->first_name, 
 			$user->last_name, 
-			$user->ID
+			$user->ID,
+			$rider_id
 		];
 		if ($details) {
-            $rider_id = get_field('rider_id', 'user_'.$user->ID);
-            if (!$rider_id) {
-                $rider_id = '';
-			}
-			$data[]	= $rider_id;
 			$data[]	= get_user_meta($user->ID, 'billing_address_1', true);
 			$data[]	= get_user_meta($user->ID, 'billing_address_2', true); 
 			$data[]	= get_user_meta($user->ID, 'billing_city', true); 

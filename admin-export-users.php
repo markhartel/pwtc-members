@@ -113,7 +113,7 @@ jQuery(document).ready(function($) {
 });
 </script>
     <div id="export-user-section">
-        <p>Use this page to show or export user accounts selected by a query criteria. Criteria consist of user roles to include or exclude (separated by a space) and whether or not the Rider ID is set. Here is a list of the currently available roles: <code><?php echo implode(' ', $available_roles); ?></code> Use the <strong>CSV File Name</strong> field to specify the name of the exported CSV file. (This file name will be prepended with the current date.) Select the <strong>Include User Details</strong> checkbox to include the user's rider ID, billing address and phone number in the exported data.</p>
+        <p>Use this page to show or export user accounts selected by a query criteria. Criteria consist of user roles to include or exclude (separated by a space) and whether or not the Rider ID is set. Here is a list of the currently available roles: <code><?php echo implode(' ', $available_roles); ?></code> Use the <strong>CSV File Name</strong> field to specify the name of the exported CSV file. (This file name will be prepended with the current date.) Select the <strong>Include User Details</strong> checkbox to include the user's billing address and phone number in the exported data.</p>
         <p>Canned Queries:&nbsp;
             <select class='query-slt'>
                 <option value="none" selected>-- select a query --</option>
