@@ -46,7 +46,6 @@ class PwtcMembers {
 		add_action( 'wc_memberships_grant_membership_access_from_purchase', 
 			array( 'PwtcMembers', 'user_membership_granted_callback' ), 10, 2);
 
-		/*
 		add_action('wc_memberships_user_membership_saved', 
 			array('PwtcMembers', 'membership_created_callback'), 10, 2);
 		add_action('wc_memberships_user_membership_created', 
@@ -55,7 +54,8 @@ class PwtcMembers {
 			array('PwtcMembers', 'membership_deleted_callback'));
 		add_action('wc_memberships_for_teams_team_saved', 
 			array('PwtcMembers', 'team_created_callback'));
-		*/
+		add_action('wc_memberships_csv_import_user_membership', 
+			array('PwtcMembers', 'membership_updated_callback'));
 
 		/* Register shortcode callbacks */
 
@@ -240,6 +240,36 @@ class PwtcMembers {
 			$user_data->add_role('customer');
 		}
 
+		if (pwtc_members_is_expired($user_membership)) {
+			if (!in_array('expired_member', $user_data->roles)) {
+				$user_data->add_role('expired_member');
+			}
+			if (in_array('current_member', $user_data->roles)) {
+				$user_data->remove_role('current_member');
+			}
+		}
+		else {
+			if (!in_array('current_member', $user_data->roles)) {
+				$user_data->add_role('current_member');
+			}
+			if (in_array('expired_member', $user_data->roles)) {
+				$user_data->remove_role('expired_member');
+			}
+		}
+	}
+
+	public static function membership_updated_callback($user_membership) {
+		$user_id = $user_membership->get_user_id();
+		$user_data = get_userdata($user_id);
+		if (!$user_data) {
+			return;			
+		}
+		if ($user_membership->get_status() == 'auto-draft' or $user_membership->get_status() == 'trash') {
+			return;
+		}
+		if (!in_array('customer', $user_data->roles)) {
+			$user_data->add_role('customer');
+		}
 		if (pwtc_members_is_expired($user_membership)) {
 			if (!in_array('expired_member', $user_data->roles)) {
 				$user_data->add_role('expired_member');
