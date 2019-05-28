@@ -316,7 +316,7 @@ class PwtcMembers {
 		}
 		else {
 			$can_view_address = current_user_can('manage_options');
-			$can_view_leaders = true;
+			$can_view_leaders = false;
 			if ($can_view_address) {
 				$a['privacy'] = 'off';
 			}
@@ -1364,6 +1364,7 @@ class PwtcMembers {
 				}
 				else {
 					$expir_date = pwtc_members_get_expiration_date($memberships[0]);
+					$expir_date = date('D M j Y', strtotime($expir_date));
 				}
 			}
 			else {

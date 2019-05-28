@@ -21,10 +21,6 @@ jQuery(document).ready(function($) {
                 '<tr><th>First Name</th><th>Last Name</th><th>Email</th><th>Role</th><th>Rider ID</th><th>Expiration Date</th><th>Note</th>' + action_label + '</tr>' +
                 '</table>');
             users.forEach(function(item) {
-                var fmtdate = '';
-                if (item.expir_date.length > 0) {
-                    fmtdate = getPrettyDate(item.expir_date);
-                }
                 var action_link = '';
                 if (item.editurl) {
                     action_link = '<td data-th="Actions">' + item.editurl + '</td>';
@@ -36,7 +32,7 @@ jQuery(document).ready(function($) {
                     '<td data-th="Email">' + item.email + '</td>' +
                     '<td data-th="Role">' + item.role + '</td>' + 
                     '<td data-th="Rider ID">' + item.riderid + '</td>' +
-                    '<td data-th="Expiration">' + fmtdate + '</td>' + 
+                    '<td data-th="Expiration">' + item.expir_date + '</td>' + 
                     '<td data-th="Note">' + item.note + '</td>' + action_link +
                     '</tr>');    
             });
