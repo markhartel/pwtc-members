@@ -243,6 +243,7 @@ class PwtcMembers {
 		if (pwtc_members_is_expired($user_membership)) {
 			if (!in_array('expired_member', $user_data->roles)) {
 				$user_data->add_role('expired_member');
+				$user_membership->add_note('PWTC Members plugin assigned Expired Member role to this member.');
 			}
 			if (in_array('current_member', $user_data->roles)) {
 				$user_data->remove_role('current_member');
@@ -251,6 +252,7 @@ class PwtcMembers {
 		else {
 			if (!in_array('current_member', $user_data->roles)) {
 				$user_data->add_role('current_member');
+				$user_membership->add_note('PWTC Members plugin assigned Current Member role to this member.');
 			}
 			if (in_array('expired_member', $user_data->roles)) {
 				$user_data->remove_role('expired_member');
@@ -273,6 +275,7 @@ class PwtcMembers {
 		if (pwtc_members_is_expired($user_membership)) {
 			if (!in_array('expired_member', $user_data->roles)) {
 				$user_data->add_role('expired_member');
+				$user_membership->add_note('PWTC Members plugin assigned Expired Member role to this member.');
 			}
 			if (in_array('current_member', $user_data->roles)) {
 				$user_data->remove_role('current_member');
@@ -281,6 +284,7 @@ class PwtcMembers {
 		else {
 			if (!in_array('current_member', $user_data->roles)) {
 				$user_data->add_role('current_member');
+				$user_membership->add_note('PWTC Members plugin assigned Current Member role to this member.');
 			}
 			if (in_array('expired_member', $user_data->roles)) {
 				$user_data->remove_role('expired_member');
@@ -302,6 +306,7 @@ class PwtcMembers {
 			if ($expired) {
 				if (!in_array('expired_member', $user_data->roles)) {
 					$user_data->add_role('expired_member');
+					$user_membership->add_note('PWTC Members plugin assigned Expired Member role to this member.');
 				}
 				if (in_array('current_member', $user_data->roles)) {
 					$user_data->remove_role('current_member');
@@ -310,6 +315,7 @@ class PwtcMembers {
 			else {
 				if (!in_array('current_member', $user_data->roles)) {
 					$user_data->add_role('current_member');
+					$user_membership->add_note('PWTC Members plugin assigned Current Member role to this member.');
 				}
 				if (in_array('expired_member', $user_data->roles)) {
 					$user_data->remove_role('expired_member');
