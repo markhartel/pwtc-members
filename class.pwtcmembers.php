@@ -208,7 +208,13 @@ class PwtcMembers {
 		}
 
 		$email = self::build_confirmation_email($membership_plan, $user_data, $membership);
-		wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
+		$status = wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
+		if ($status) {
+			$user_membership->add_note('PWTC Members plugin sent confirmation email to this member, send was successful.');
+		}
+		else {
+			$user_membership->add_note('PWTC Members plugin sent confirmation email to this member, send failed.');
+		}
 	}
 
 	public static function membership_created_callback($membership_plan, $args = array()) {
@@ -331,11 +337,14 @@ class PwtcMembers {
 			return;			
 		}
 
-		if (in_array('expired_member', $user_data->roles)) {
-			$user_data->remove_role('expired_member');
-		}
-		if (in_array('current_member', $user_data->roles)) {
-			$user_data->remove_role('current_member');
+		$count = self::count_remaining_memberships($user_id, $user_membership->get_id());
+		if ($count == 0) {
+			if (in_array('expired_member', $user_data->roles)) {
+				$user_data->remove_role('expired_member');
+			}
+			if (in_array('current_member', $user_data->roles)) {
+				$user_data->remove_role('current_member');
+			}
 		}
 	}
 
@@ -1264,6 +1273,17 @@ class PwtcMembers {
 		return '' . $count;
 	}
 
+	public static function count_remaining_memberships($userid, $memberid) {
+		global $wpdb;
+		$stmt = $wpdb->prepare(
+			"select count(ID) from " . $wpdb->posts . 
+			" where post_type = 'wc_user_membership'" . 
+			" and post_status not in ('auto-draft', 'trash')" . 
+			" and post_author = %d and ID <> %d", $userid, $memberid);
+		$results = $wpdb->get_var($stmt);
+		return $results;
+	}
+
 	public static function fetch_users_with_multi_memberships($count_only = false) {
 		global $wpdb;
 		$post_type = 'wc_user_membership';
@@ -1387,6 +1407,7 @@ class PwtcMembers {
 		$users = array();
 		$profiles = pwtc_members_lookup_user($memberid, $lastname, $firstname, $email, $exact);
 		foreach ($profiles as $profile) {
+			$fix_roles = false;
 			$info = get_userdata($profile->ID);
 			$note = '';
 			$expir_date = '';
@@ -1394,6 +1415,10 @@ class PwtcMembers {
 				$memberships = wc_memberships_get_user_memberships($profile->ID);
 				if (empty($memberships)) {
 					$note = 'no membership';
+					if (in_array('expired_member', $info->roles) or 
+						in_array('current_member', $info->roles)) {
+						$fix_roles = true;
+					}
 				}
 				else if (count($memberships) > 1) {
 					$note = 'multiple memberships';
@@ -1401,6 +1426,17 @@ class PwtcMembers {
 				else {
 					$expir_date = pwtc_members_get_expiration_date($memberships[0]);
 					$expir_date = date('D M j Y', strtotime($expir_date));
+					$is_expired = pwtc_members_is_expired($memberships[0]);
+					if ($is_expired and !in_array('expired_member', $info->roles)) {
+						$fix_roles = true;
+					}
+					if (!$is_expired and !in_array('current_member', $info->roles)) {
+						$fix_roles = true;
+					}
+					if (in_array('expired_member', $info->roles) and 
+						in_array('current_member', $info->roles)) {
+						$fix_roles = true;
+					}
 				}
 			}
 			else {
@@ -1419,12 +1455,12 @@ class PwtcMembers {
 				'expir_date' => $expir_date,
 				'note' => $note,
 				'role' => $role,
-				'riderid' => $riderid
+				'riderid' => $riderid,
+				'fix_roles' => $fix_roles
 			);
 			if ($add_edit_link) {
 				$href = admin_url('user-edit.php?user_id=' . $profile->ID);
-				$edit_url = '<a title="Edit user account profile." target="_blank" href="' . $href . '">Edit</a>';
-				$item['editurl'] = $edit_url;
+				$item['editurl'] = $href;
 			}
 			$users[] = $item;
 		}

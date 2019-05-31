@@ -25,6 +25,9 @@ class PwtcMembers_Admin {
 		add_action( 'wp_ajax_pwtc_members_send_test_email', 
 			array( 'PwtcMembers_Admin', 'send_test_email_callback') );
 
+		add_action( 'wp_ajax_pwtc_members_fix_user_roles', 
+			array( 'PwtcMembers_Admin', 'fix_user_roles_callback') );
+
 		add_action( 'wp_ajax_pwtc_members_fix_invalid_members', 
 			array( 'PwtcMembers_Admin', 'fix_invalid_members_callback') );
 
@@ -442,6 +445,73 @@ class PwtcMembers_Admin {
 		return $users;
 	}
 
+	public static function fix_user_roles_callback() {
+		if (!current_user_can('manage_options')) {
+			$response = array(
+				'error' => 'Fix failed - user access denied.'
+			);		
+		}
+		else if (!isset($_POST['nonce']) or !isset($_POST['userid'])) {
+			$response = array(
+				'error' => 'Fix failed - AJAX arguments missing.'
+			);
+		}
+		else {
+			$nonce = $_POST['nonce'];	
+			if (!wp_verify_nonce($nonce, 'pwtc_members_fix_user_roles')) {
+				$response = array(
+					'error' => 'Fix failed - nonce security check failed.'
+				);
+			}
+			else {
+				$user_info = get_userdata( intval($_POST['userid']) ); 
+				if ($user_info) {
+					$memberships = wc_memberships_get_user_memberships($user_info->ID);
+					if (empty($memberships)) {
+						if (in_array('expired_member', $user_info->roles)) {
+							$user_info->remove_role('expired_member');
+						}
+						if (in_array('current_member', $user_info->roles)) {
+							$user_info->remove_role('current_member');
+						}				
+					}
+					else if (count($memberships) == 1) {
+						$membership = $memberships[0];
+						if (!in_array('customer', $user_info->roles)) {
+							$user_info->add_role('customer');
+						}
+						if (pwtc_members_is_expired($membership)) {
+							if (!in_array('expired_member', $user_info->roles)) {
+								$user_info->add_role('expired_member');
+							}
+							if (in_array('current_member', $user_info->roles)) {
+								$user_info->remove_role('current_member');
+							}
+						}
+						else {
+							if (!in_array('current_member', $user_info->roles)) {
+								$user_info->add_role('current_member');
+							}
+							if (in_array('expired_member', $user_info->roles)) {
+								$user_info->remove_role('expired_member');
+							}
+						}						
+					}
+					$response = array(
+						'userid' => $user_info->ID
+					);	
+				}
+				else {
+					$response = array(
+						'error' => 'Fix failed - cannot access user.'
+					);	
+				}
+			}
+		}
+		echo wp_json_encode($response);
+		wp_die();
+	}
+
 	public static function fix_invalid_members_callback() {
 		if (!current_user_can('manage_options')) {
 			$response = array(
@@ -459,7 +529,6 @@ class PwtcMembers_Admin {
 				$response = array(
 					'status' => 'Fix failed - nonce security check failed.'
 				);
-				echo wp_json_encode($response);
 			}
 			else {
 				$count = 0;
@@ -506,7 +575,6 @@ class PwtcMembers_Admin {
 				$response = array(
 					'status' => 'Fix failed - nonce security check failed.'
 				);
-				echo wp_json_encode($response);
 			}
 			else {
 				$count = 0;

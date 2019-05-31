@@ -10,20 +10,31 @@ else {
 ?>
 <script type="text/javascript">
 jQuery(document).ready(function($) { 
+
+    function fix_user_roles_cb(response) {
+        var res = JSON.parse(response);
+        if (res.error) {
+            $('#user-lookup-section .fix-msg-div').html(res.error);
+        }
+        else {
+            load_user_table();
+        }
+    }
+
 	function populate_users_table(users) {
 		$('#user-lookup-section .users-div').empty();
         if (users.length > 0) {
-            var action_label = '';
-            if (users[0].editurl) {
-                action_label = '<th>Actions</th>';
-            }
-            $('#user-lookup-section .users-div').append('<table class="pwtc-members-rwd-table">' +
-                '<tr><th>First Name</th><th>Last Name</th><th>Email</th><th>Role</th><th>Rider ID</th><th>Expiration Date</th><th>Note</th>' + action_label + '</tr>' +
+           $('#user-lookup-section .users-div').append('<table class="pwtc-members-rwd-table">' +
+                '<tr><th>First Name</th><th>Last Name</th><th>Email</th><th>Role</th><th>Rider ID</th><th>Expiration Date</th><th>Note</th><th>Actions</th></tr>' +
                 '</table>');
             users.forEach(function(item) {
-                var action_link = '';
+                var edit_link = '';
                 if (item.editurl) {
-                    action_link = '<td data-th="Actions">' + item.editurl + '</td>';
+                    edit_link = '<a title="Edit user account profile." target="_blank" href="' + item.editurl + '">Edit</a>';
+                }
+                var fix_link = '';
+                if (item.fix_roles) {
+                    fix_link = '<a title="Fix user membership roles." class="fix-btn">Fix</a>';
                 }
                 $('#user-lookup-section .users-div table').append(
                     '<tr userid="' + item.userid + '">' + 
@@ -33,8 +44,20 @@ jQuery(document).ready(function($) {
                     '<td data-th="Role">' + item.role + '</td>' + 
                     '<td data-th="Rider ID">' + item.riderid + '</td>' +
                     '<td data-th="Expiration">' + item.expir_date + '</td>' + 
-                    '<td data-th="Note">' + item.note + '</td>' + action_link +
+                    '<td data-th="Note">' + item.note + '</td>' + 
+                    '<td data-th="Actions">' + edit_link + ' ' + fix_link + '</td>' +
                     '</tr>');    
+            });
+            $('#user-lookup-section .users-div .fix-btn').on('click', function(evt) {
+                evt.preventDefault();
+                $('#user-lookup-section .fix-msg-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
+                var action = '<?php echo admin_url('admin-ajax.php'); ?>';
+                var data = {
+                    'action': 'pwtc_members_fix_user_roles',
+                    'nonce': '<?php echo wp_create_nonce('pwtc_members_fix_user_roles'); ?>',
+                    'userid': $(this).parent().parent().attr('userid')
+                };
+                $.post(action, data, fix_user_roles_cb);
             });
         }
         else {
@@ -57,6 +80,7 @@ jQuery(document).ready(function($) {
     }
 
     function load_user_table() {
+        $('#user-lookup-section .fix-msg-div').empty();
         var memberid = $("#user-lookup-section .search-frm input[name='memberid']").val().trim();
         var firstname = $("#user-lookup-section .search-frm input[name='firstname']").val().trim();
         var lastname = $("#user-lookup-section .search-frm input[name='lastname']").val().trim();
@@ -92,6 +116,7 @@ jQuery(document).ready(function($) {
         evt.preventDefault();
         $("#user-lookup-section .search-frm input[type='text']").val(''); 
         $('#user-lookup-section .users-div').empty();
+        $('#user-lookup-section .fix-msg-div').empty();
     });
 
     $("#user-lookup-section .search-frm input[type='text']").val('');   
@@ -119,6 +144,7 @@ jQuery(document).ready(function($) {
 			</form>
         </div>
         <p><div class="users-div"></div></p>
+        <p><div class="fix-msg-div"></div></p>
     </div>
 <?php
 }
