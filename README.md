@@ -10,6 +10,7 @@ Deactivate and then delete the **PWTC Members** plugin from the Plugins manageme
 ## Plugin Shortcodes
 These shortcodes allow users to add plugin specific content into Wordpress
 pages.
+
 `[pwtc_member_directory]` *form that allow search and access of the membership directory*
 
 Argument|Description|Values|Default
@@ -53,3 +54,18 @@ Use this page to detect any user accounts that have a membership but are missing
 Use this page to test the membership confirmation email mechanism.
 
 ## WooCommerce Membership Customizations
+
+## Package Files Used By This Plugin
+- `README.md` *this file*
+- `pwtc-members.php` *plugin definition file*
+- `acf-hooks.php` *Advanced Custom Fields hooks file*
+- `pwtc-members-hooks.php` *plugin hooks file*
+- `class.pwtcmembers.php` *PHP class with server-side logic*
+- `class.pwtcmembers-admin.php` *PHP class with admin server-side logic*
+- `admin-export-user.php` *client-side logic for Export Users admin page*
+- `admin-invalid-members.php` *client-side logic for Invalid Membership Roles admin page*
+- `admin-lookup-users.php` *client-side logic for Lookup Users admin page*
+- `admin-missing-members.php` *client-side logic for Missing Membership Roles admin page*
+- `admin-multi-members.php` *client-side logic for Multiple Memberships admin page*
+- `admin-test-email.php` *client-side logic for Test Confirmation Email admin page*
+- `reports-style.css` *stylesheet for report shortcodes*
