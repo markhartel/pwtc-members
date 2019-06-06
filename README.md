@@ -54,6 +54,14 @@ Use this page to detect any user accounts that have a membership but are missing
 Use this page to test the membership confirmation email mechanism.
 
 ## WooCommerce Membership Customizations
+Customize the WooCommerce Membership plugin to support these additional features:
+- Send a confirmation email when a new individual or family membership is purchased
+- Set the **Release Accepted** checkbox field in a user's profile upon purchase checkout
+- Remove access to the user profile page for users with non-admin roles
+- Convert phone numbers entered on the **My Account** and **Checkout** pages to a pretty format
+- Fix the expiration date display for family members on the **My Account** page
+- Exclude membership products from the **Store** page
+- Add the rider ID, release accepted flag and billing phone number to a member's details box
 
 ## Package Files Used By This Plugin
 - `README.md` *this file*
