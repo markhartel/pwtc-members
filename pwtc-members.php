@@ -2,7 +2,7 @@
 /*
 Plugin Name: PWTC Members
 Plugin URI: https://github.com/markhartel/pwtc-members
-Description: Provides additional shortcodes, admin pages and customizations to enhance the WooCommerce membership plugins.
+Description: Provides additional shortcodes, admin pages and customizations to enhance the WooCommerce membership plugins for the Portland Bicycling Club website.
 Version: 1.1
 Author: Mark Hartel
 */
