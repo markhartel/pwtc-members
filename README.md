@@ -9,7 +9,13 @@ Deactivate and then delete the **PWTC Members** plugin from the Plugins manageme
 
 ## Plugin Shortcodes
 These shortcodes allow users to add plugin specific content into Wordpress
-pages.
+pages. For example, if you place the following text string into your page content, it will 
+render as a form that allows users to search the membership directory, limiting the number
+of maps returned to 10 per page:
+
+`[pwtc_member_directory limit="10"]`
+
+### Membership Directory Shortcodes
 
 `[pwtc_member_directory]` *form that allow search and access of the membership directory*
 
@@ -17,6 +23,8 @@ Argument|Description|Values|Default
 --------|-----------|------|-------
 limit|limit the number of members shown per page|(number)|0 (unlimited)
 privacy|specify the member's privacy mode|off, exclude, hide|off
+
+### Membership Statistics Shortcodes
 
 `[pwtc_member_statistics]` *lists the membership statistics*
 
@@ -28,6 +36,8 @@ Argument|Description|Values|Default
 --------|-----------|------|-------
 lookback|the number of months to look back for new members|(number)|0
 
+### Membership Nag Shortcodes
+
 `[pwtc_member_renew_nag]` *nags the logged in user to renew their membership if expired*
 
 Argument|Description|Values|Default
@@ -35,6 +45,8 @@ Argument|Description|Values|Default
 renewonly|display nag only if membership is expired|no, yes|no
 
 `[pwtc_member_accept_release]` *nags the logged in user to accept the club's release statement*
+
+### Ride Leader Shortcodes
 
 `[pwtc_member_leader_contact]` *form that allow the logged in user to set their ride leader contact information*
 

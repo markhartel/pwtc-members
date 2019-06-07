@@ -1,6 +1,7 @@
 <?php
 /*
 Plugin Name: PWTC Members
+Plugin URI: https://github.com/markhartel/pwtc-members
 Description: Provides additional shortcodes, admin pages and customizations to enhance the WooCommerce membership plugins.
 Version: 1.1
 Author: Mark Hartel
