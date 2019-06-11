@@ -676,10 +676,10 @@ class PwtcMembers {
 			$complimentary = self::count_membership('wcm-complimentary');
 			$paused = self::count_membership('wcm-paused');
 			$cancelled = self::count_membership('wcm-cancelled');
-			$multimembers = self::fetch_users_with_multi_memberships(true);
+			$multimembers = self::fetch_users_with_multi_memberships('wc_user_membership', true);
 			ob_start();
 			?>
-			<div>Membership statistics as of <?php echo $today; ?><br>
+			<div>Membership statistics as of <?php echo $today; ?>:<br>
 			<?php echo $total; ?> total members:<ul>
 			<li><?php echo $active; ?> active members</li>
 			<li><?php echo $expired; ?> expired members</li>
@@ -703,10 +703,11 @@ class PwtcMembers {
 			$today = date('F j Y', current_time('timestamp'));
 			$families = self::count_family_memberships();
 			$family_members = self::count_family_members();
+			$multifamilies = self::fetch_users_with_multi_memberships('wc_memberships_team', true);
 			ob_start();
 			?>
-			<div>Family member statistics as of <?php echo $today; ?><br>
-			<?php echo $families; ?> family memberships with a total of <?php echo $family_members; ?> family members
+			<div>Family member statistics as of <?php echo $today; ?>:<br>
+			<?php echo $families; ?> family memberships with a total of <?php echo $family_members; ?> family members<br><?php echo $multifamilies; ?> users owning multiple family memberships
 			</div>
 			<?php
 			return ob_get_clean();
@@ -1284,9 +1285,8 @@ class PwtcMembers {
 		return $results;
 	}
 
-	public static function fetch_users_with_multi_memberships($count_only = false) {
+	public static function fetch_users_with_multi_memberships($post_type, $count_only = false) {
 		global $wpdb;
-		$post_type = 'wc_user_membership';
 		$select_item = 'distinct a.post_author';
 		if ($count_only) {
 			$select_item = 'count(' . $select_item . ')';
