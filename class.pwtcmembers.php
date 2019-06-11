@@ -680,7 +680,7 @@ class PwtcMembers {
 			ob_start();
 			?>
 			<div>Membership statistics as of <?php echo $today; ?>:<br>
-			<?php echo $total; ?> total members:<ul>
+			<?php echo $total; ?> total members<ul>
 			<li><?php echo $active; ?> active members</li>
 			<li><?php echo $expired; ?> expired members</li>
 			<li><?php echo $complimentary; ?> complimentary members</li>
