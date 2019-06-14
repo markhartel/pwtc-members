@@ -337,7 +337,7 @@ class PwtcMembers {
 			return;			
 		}
 
-		$count = self::count_remaining_memberships($user_id, $user_membership->get_id());
+		$count = self::count_remaining_memberships('wc_user_membership', $user_id, $user_membership->get_id());
 		if ($count == 0) {
 			if (in_array('expired_member', $user_data->roles)) {
 				$user_data->remove_role('expired_member');
@@ -802,18 +802,21 @@ class PwtcMembers {
 			return ob_get_clean();
 		}
 		$membership = $memberships[0];
-		if ($a['renewonly'] == 'yes') {
-			if (!$membership->is_expired()) {
-				return '';
-			}
-		}
 		$team = false;
 		if (function_exists('wc_memberships_for_teams_get_user_membership_team')) {
 			$team = wc_memberships_for_teams_get_user_membership_team($membership->get_id());
 		}
 		if ($team) {
 			if ($team->is_user_owner($current_user->ID)) {
-				if ($team->is_membership_expired()) {
+				$count = self::count_remaining_memberships('wc_memberships_team', $current_user->ID, $team->get_id());
+				if ($count > 0) {
+					ob_start();
+					?>
+					<div class="callout alert"><p>You own multiple family memberships, please notify website admin to resolve</p></div>		
+					<?php
+					return ob_get_clean();		
+				}
+				else if ($team->is_membership_expired()) {
 					ob_start();
 					?>
 					<div class="callout warning"><p>Your family membership "<?php echo $team->get_name(); ?>" expired on <?php echo date('F j, Y', $team->get_local_membership_end_date('timestamp')); ?>. <a href="<?php echo $team->get_renew_membership_url(); ?>">Click here to renew</a></p></div>		
@@ -821,6 +824,9 @@ class PwtcMembers {
 					return ob_get_clean();
 				}
 				else {
+					if ($a['renewonly'] == 'yes') {
+						return '';
+					}			
 					ob_start();
 					?>
 					<div class="callout success"><p>Your family membership "<?php echo $team->get_name(); ?>" will expire on <?php echo date('F j, Y', $team->get_local_membership_end_date('timestamp')); ?></p></div>		
@@ -837,6 +843,9 @@ class PwtcMembers {
 					return ob_get_clean();	
 				}
 				else {
+					if ($a['renewonly'] == 'yes') {
+						return '';
+					}			
 					ob_start();
 					?>
 					<div class="callout success"><p>Your family membership "<?php echo $team->get_name(); ?>" will expire on <?php echo date('F j, Y',$team->get_local_membership_end_date('timestamp')); ?></p></div>		
@@ -854,6 +863,9 @@ class PwtcMembers {
 				return ob_get_clean();
 			}
 			else {
+				if ($a['renewonly'] == 'yes') {
+					return '';
+				}		
 				if ($membership->has_end_date()) {
 					ob_start();
 					?>
@@ -1274,13 +1286,13 @@ class PwtcMembers {
 		return '' . $count;
 	}
 
-	public static function count_remaining_memberships($userid, $memberid) {
+	public static function count_remaining_memberships($post_type, $userid, $postid) {
 		global $wpdb;
 		$stmt = $wpdb->prepare(
 			"select count(ID) from " . $wpdb->posts . 
-			" where post_type = 'wc_user_membership'" . 
+			" where post_type = %s" . 
 			" and post_status not in ('auto-draft', 'trash')" . 
-			" and post_author = %d and ID <> %d", $userid, $memberid);
+			" and post_author = %d and ID <> %d", $post_type, $userid, $postid);
 		$results = $wpdb->get_var($stmt);
 		return $results;
 	}
