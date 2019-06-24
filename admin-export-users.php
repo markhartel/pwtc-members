@@ -92,21 +92,16 @@ jQuery(document).ready(function($) {
         var includes = $("#export-user-section .query-frm textarea[name='includes']").val().trim();
         var excludes = $("#export-user-section .query-frm textarea[name='excludes']").val().trim();
         var riderid = $("#export-user-section .query-frm input[name='riderid']:checked").val();
-        if (includes.length > 0 || excludes.length > 0) {
-            $('#export-user-section .users-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
-            var action = '<?php echo admin_url('admin-ajax.php'); ?>';
-            var data = {
-                'action': 'pwtc_members_show_users',
-                'includes': includes,
-                'excludes': excludes,
-                'riderid': riderid
-            };
-            $.post(action, data, show_users_cb);
-        }
-        else {
-            $("#export-user-section .users-div").empty();
-        }
-    });
+        $('#export-user-section .users-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
+        var action = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var data = {
+            'action': 'pwtc_members_show_users',
+            'includes': includes,
+            'excludes': excludes,
+            'riderid': riderid
+        };
+        $.post(action, data, show_users_cb);
+});
 
     $("#export-user-section .query-div").hide();
     $('#export-user-section .query-slt').focus(); 
