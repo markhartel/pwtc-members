@@ -1408,8 +1408,8 @@ class PwtcMembers {
 		}
 		return array(
 			'to' => $to,
-			'subject' => stripslashes($subject),
-			'message' => nl2br(stripslashes($message)),
+			'subject' => $subject, //stripslashes($subject),
+			'message' => $message, //nl2br(stripslashes($message)),
 			'headers' => $headers
 		);
 	}
