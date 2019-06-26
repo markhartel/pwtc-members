@@ -1362,7 +1362,11 @@ class PwtcMembers {
 			$team = wc_memberships_for_teams_get_user_membership_team( $membership->get_id() );
 		}
 
+		$team_not_owner = false;
 		if ( $team ) {
+			if ($team->get_owner_id() != $user_data->ID) {
+				$team_not_owner = true;
+			}
 			$message = get_field('family_membership_email', 'option');
 			$member_expires = date('F j, Y', $team->get_local_membership_end_date('timestamp'));
 			$member_starts = date('F j, Y', $team->get_local_date('timestamp'));
@@ -1407,9 +1411,10 @@ class PwtcMembers {
 			$headers[] = 'Bcc: ' . $membersec_email;
 		}
 		return array(
+			'team_not_owner' => $team_not_owner,
 			'to' => $to,
-			'subject' => $subject, //stripslashes($subject),
-			'message' => $message, //nl2br(stripslashes($message)),
+			'subject' => $subject,
+			'message' => $message,
 			'headers' => $headers
 		);
 	}

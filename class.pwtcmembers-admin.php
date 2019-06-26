@@ -389,30 +389,37 @@ class PwtcMembers_Admin {
 							else {
 								$email_to = $_POST['email_to'];
 								$email = PwtcMembers::build_confirmation_email($membership_plan, $user_data, $membership, $email_to);
-								$esc_headers = array();
-								foreach ( $email['headers'] as $header ) {
-									$esc_headers[] = esc_html($header);
-								}
-								if (empty($email_to)) {
+								if ($email['team_not_owner']) {
 									$response = array(
-										'to' => esc_html($email['to']),
-										'subject' => esc_html($email['subject']),
-										'message' => $email['message'],
-										'headers' => $esc_headers
-									);				
+										'status' => 'Send test email failed - member is not a team owner.'
+									);
 								}
 								else {
-									$status = wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
-									$sent_to = 'Email sent to ' . esc_html($email['to']);
-									if ($status) {
+									$esc_headers = array();
+									foreach ( $email['headers'] as $header ) {
+										$esc_headers[] = esc_html($header);
+									}
+									if (empty($email_to)) {
 										$response = array(
-											'status' => $sent_to . ' - wp_mail returned true.'
+											'to' => esc_html($email['to']),
+											'subject' => esc_html($email['subject']),
+											'message' => $email['message'],
+											'headers' => $esc_headers
 										);				
 									}
 									else {
-										$response = array(
-											'status' => $sent_to . ' - wp_mail returned false.'
-										);				
+										$status = wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
+										$sent_to = 'Email sent to ' . esc_html($email['to']);
+										if ($status) {
+											$response = array(
+												'status' => $sent_to . ' - wp_mail returned true.'
+											);				
+										}
+										else {
+											$response = array(
+												'status' => $sent_to . ' - wp_mail returned false.'
+											);				
+										}
 									}
 								}
 							}
