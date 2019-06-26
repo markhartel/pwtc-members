@@ -41,6 +41,7 @@ jQuery(document).ready(function($) {
         var member_email = $("#test-email-section .email-frm input[name='member_email']").val().trim();
         if (member_email.length > 0) {
             $('#test-email-section .msg-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
+            $("#test-email-section .send-div").hide();
             var action = $('#test-email-section .email-frm').attr('action');
             var data = {
                 'action': 'pwtc_members_send_test_email',

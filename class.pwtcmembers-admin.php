@@ -337,45 +337,46 @@ class PwtcMembers_Admin {
 	public static function send_test_email_callback() {
 		if (!current_user_can('manage_options')) {
 			$response = array(
-				'status' => 'Send test email failed - user access denied.'
+				'status' => 'Confirmation email test failed - user access denied.'
 			);		
 		}
 		else if (!isset($_POST['member_email']) or !isset($_POST['email_to']) or !isset($_POST['nonce'])) {
 			$response = array(
-				'status' => 'Send test email failed - AJAX arguments missing.'
+				'status' => 'Confirmation email test failed - AJAX arguments missing.'
 			);		
 		}
 		else {
 			$nonce = $_POST['nonce'];	
 			if (!wp_verify_nonce($nonce, 'pwtc_members_send_test_email')) {
 				$response = array(
-					'status' => 'Send test email failed - nonce security check failed.'
+					'status' => 'Confirmation email test failed - nonce security check failed.'
 				);
 				echo wp_json_encode($response);
 			}
 			else {
-				$user_data = get_user_by( 'email', $_POST['member_email'] );
+				$member_email = $_POST['member_email'];
+				$user_data = get_user_by( 'email', $member_email );
 				if (!$user_data) {
 					$response = array(
-						'status' => 'Send test email failed - no user with that email.'
+						'status' => 'Confirmation email test failed - no user with that email.'
 					);		
 				}
 				else {
 					if (!function_exists('wc_memberships_get_user_memberships')) {
 						$response = array(
-							'status' => 'Send test email failed - membership system not active.'
+							'status' => 'Confirmation email test failed - membership system not active.'
 						);		
 					}
 					else {
 						$memberships = wc_memberships_get_user_memberships($user_data->ID);
 						if (empty($memberships)) {
 							$response = array(
-								'status' => 'Send test email failed - user has no memberships.'
+								'status' => 'Confirmation email test failed - user has no memberships.'
 							);		
 						}
 						else if (count($memberships) > 1) {
 							$response = array(
-								'status' => 'Send test email failed - user has multiple memberships.'
+								'status' => 'Confirmation email test failed - user has multiple memberships.'
 							);		
 						}
 						else {
@@ -383,7 +384,7 @@ class PwtcMembers_Admin {
 							$membership_plan = $membership->get_plan();
 							if (!$membership_plan) {
 								$response = array(
-									'status' => 'Send test email failed - membership has no plan.'
+									'status' => 'Confirmation email test failed - membership has no plan.'
 								);			
 							}
 							else {
@@ -391,7 +392,7 @@ class PwtcMembers_Admin {
 								$email = PwtcMembers::build_confirmation_email($membership_plan, $user_data, $membership, $email_to);
 								if ($email['team_not_owner']) {
 									$response = array(
-										'status' => 'Send test email failed - member is not a team owner.'
+										'status' => 'Confirmation email test failed - family member is not membership owner.'
 									);
 								}
 								else {
@@ -409,7 +410,15 @@ class PwtcMembers_Admin {
 									}
 									else {
 										$status = wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
-										$sent_to = 'Email sent to ' . esc_html($email['to']);
+										if ($member_email == $email_to) {
+											if ($status) {
+												$membership->add_note('Membership confirmation email manually sent to this member, send was successful.');
+											}
+											else {
+												$membership->add_note('Membership confirmation email manually sent to this member, send failed.');
+											}									
+										}
+										$sent_to = 'Confirmation email sent to ' . esc_html($email['to']);
 										if ($status) {
 											$response = array(
 												'status' => $sent_to . ' - wp_mail returned true.'
