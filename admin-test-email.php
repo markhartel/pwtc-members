@@ -82,7 +82,7 @@ jQuery(document).ready(function($) {
 });
 </script>
     <div id="test-email-section">
-        <p>Use this page to test the membership confirmation email mechanism. You may show the email contents and then send to the member or a third-party.</p>        
+        <p>Use this page to test the membership confirmation email mechanism. You may show the email contents and then manually send it to the member or a third-party. (This email is automatically sent to a user after they purchase a membership product.) To configure the email contents, go to the <a target="_blank" href="<?php echo admin_url('admin.php?page=theme-general-settings'); ?>">Theme Settings</a> admin page.</p>
         <div class="pwtc-members-search-sec">
             <form class="pwtc-members-stacked-form email-frm" action="<?php echo admin_url('admin-ajax.php'); ?>" method="POST">
                 <span>Member Email</span>

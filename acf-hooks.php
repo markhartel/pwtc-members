@@ -10,7 +10,7 @@ if ( function_exists('acf_add_local_field_group') ) {
                 'label' => 'Send Membership Email',
                 'name' => 'send_membership_email',
                 'type' => 'true_false',
-                'instructions' => '',
+                'instructions' => 'Select to send a membership confirmation email to a user after they purchase a membership product.',
                 'required' => 0,
                 'conditional_logic' => 0,
                 'wrapper' => array (
