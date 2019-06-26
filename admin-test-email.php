@@ -59,12 +59,12 @@ jQuery(document).ready(function($) {
 
     $('#test-email-section .send-frm').on('submit', function(evt) {
         evt.preventDefault();
-        var member_email = $("#test-email-section .email-frm input[name='member_email']").val().trim();
-        var email_to = $("#test-email-section .email-frm input[name='email_to']").val().trim();
+        var member_email = $("#test-email-section .send-frm input[name='member_email']").val().trim();
+        var email_to = $("#test-email-section .send-frm input[name='email_to']").val().trim();
         if (email_to.length > 0) {
             $('#test-email-section .msg-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
             $("#test-email-section .send-div").hide();
-            var action = $('#test-email-section .email-frm').attr('action');
+            var action = $('#test-email-section .send-frm').attr('action');
             var data = {
                 'action': 'pwtc_members_send_test_email',
                 'nonce': '<?php echo wp_create_nonce('pwtc_members_send_test_email'); ?>',
