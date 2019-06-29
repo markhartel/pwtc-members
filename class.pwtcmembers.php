@@ -53,7 +53,7 @@ class PwtcMembers {
 		add_action('wc_memberships_user_membership_deleted', 
 			array('PwtcMembers', 'membership_deleted_callback'));
 		add_action('wc_memberships_for_teams_team_saved', 
-			array('PwtcMembers', 'team_created_callback'));
+			array('PwtcMembers', 'team_created_callback2'));
 		add_action('wc_memberships_csv_import_user_membership', 
 			array('PwtcMembers', 'membership_updated_callback'));
 
@@ -330,6 +330,13 @@ class PwtcMembers {
 					$user_data->remove_role('expired_member');
 				}
 			}
+		}
+	}
+
+	public static function team_created_callback2($team) {
+		$user_memberships = $team->get_user_memberships();
+		foreach ( $user_memberships as $user_membership ) {
+			self::adjust_team_member_data_callback(0, $team, $user_membership);
 		}
 	}
 
