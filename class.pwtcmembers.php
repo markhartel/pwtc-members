@@ -334,9 +334,11 @@ class PwtcMembers {
 	}
 
 	public static function team_created_callback2($team) {
+		$end_date = $team->get_membership_end_date();
 		$user_memberships = $team->get_user_memberships();
 		foreach ( $user_memberships as $user_membership ) {
-			self::adjust_team_member_data_callback(0, $team, $user_membership);
+			$user_membership->add_note('Team saved, end date is ' . $end_date);
+			//self::adjust_team_member_data_callback(0, $team, $user_membership);
 		}
 	}
 
