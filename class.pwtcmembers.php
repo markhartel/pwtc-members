@@ -57,6 +57,9 @@ class PwtcMembers {
 		add_action('wc_memberships_csv_import_user_membership', 
 			array('PwtcMembers', 'membership_updated_callback'));
 
+		add_action('wc_memberships_for_teams_add_team_member', 
+			array('PwtcMembers', 'adjust_team_member_data_callback' ), 10, 3);
+
 		/* Register shortcode callbacks */
 
 		add_shortcode('pwtc_member_directory', 
@@ -345,6 +348,19 @@ class PwtcMembers {
 			if (in_array('current_member', $user_data->roles)) {
 				$user_data->remove_role('current_member');
 			}
+		}
+	}
+
+	public static function adjust_team_member_data_callback($team_member, $team, $user_membership) {
+		$end_date = $team->get_membership_end_date('timestamp');
+		$user_membership->set_end_date($end_date);
+		if ($team->is_membership_expired()) {
+			$user_membership->update_status('expired');
+		}
+		else {
+			if ($user_membership->is_expired() || $user_membership->is_cancelled()) {
+				$user_membership->update_status('active');
+			}			
 		}
 	}
 
