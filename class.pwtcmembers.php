@@ -60,6 +60,9 @@ class PwtcMembers {
 		add_action('wc_memberships_for_teams_add_team_member', 
 			array('PwtcMembers', 'adjust_team_member_data_callback' ), 10, 3);
 
+		add_action('wc_memberships_for_teams_team_created', 
+			array('PwtcMembers', 'adjust_team_members_data_callback' ));
+
 		/* Register shortcode callbacks */
 
 		add_shortcode('pwtc_member_directory', 
@@ -370,6 +373,13 @@ class PwtcMembers {
 				$user_membership->update_status('active');
 			}			
 		}
+	}
+
+	public static function adjust_team_members_data_callback($team) {
+		$user_memberships = $team->get_user_memberships();
+		foreach ( $user_memberships as $user_membership ) {
+			self::adjust_team_member_data_callback(false, $team, $user_membership);
+		}	
 	}
 
 	/*************************************************************/
