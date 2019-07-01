@@ -52,8 +52,8 @@ class PwtcMembers {
 			array('PwtcMembers', 'membership_created_callback'), 10, 2);
 		add_action('wc_memberships_user_membership_deleted', 
 			array('PwtcMembers', 'membership_deleted_callback'));
-		add_action('wc_memberships_for_teams_team_saved', 
-			array('PwtcMembers', 'team_created_callback2'));
+//		add_action('wc_memberships_for_teams_team_saved', 
+//			array('PwtcMembers', 'team_created_callback2'));
 		add_action('wc_memberships_csv_import_user_membership', 
 			array('PwtcMembers', 'membership_updated_callback'));
 
@@ -338,7 +338,6 @@ class PwtcMembers {
 		$user_memberships = $team->get_user_memberships();
 		foreach ( $user_memberships as $user_membership ) {
 			$user_membership->add_note('Team saved, end date is ' . $end_date);
-			//self::adjust_team_member_data_callback(0, $team, $user_membership);
 		}
 	}
 
@@ -361,8 +360,8 @@ class PwtcMembers {
 	}
 
 	public static function adjust_team_member_data_callback($team_member, $team, $user_membership) {
-		$end_date = $team->get_membership_end_date('timestamp');
-		$user_membership->set_end_date($end_date);
+		$team_end_date = $team->get_membership_end_date('timestamp');
+		$user_membership->set_end_date($team_end_date);
 		if ($team->is_membership_expired()) {
 			$user_membership->update_status('expired');
 		}
