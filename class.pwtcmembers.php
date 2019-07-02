@@ -52,8 +52,6 @@ class PwtcMembers {
 			array('PwtcMembers', 'membership_created_callback'), 10, 2);
 		add_action('wc_memberships_user_membership_deleted', 
 			array('PwtcMembers', 'membership_deleted_callback'));
-//		add_action('wc_memberships_for_teams_team_saved', 
-//			array('PwtcMembers', 'team_created_callback2'));
 		add_action('wc_memberships_csv_import_user_membership', 
 			array('PwtcMembers', 'membership_updated_callback'));
 
@@ -301,46 +299,6 @@ class PwtcMembers {
 			if (in_array('expired_member', $user_data->roles)) {
 				$user_data->remove_role('expired_member');
 			}
-		}
-	}
-
-	public static function team_created_callback($team) {
-		$expired = $team->is_membership_expired();
-		$user_memberships = $team->get_user_memberships();
-
-		foreach ( $user_memberships as $user_membership ) {
-			$user_id = $user_membership->get_user_id();
-			$user_data = get_userdata($user_id);
-			if (!$user_data) {
-				continue;			
-			}
-
-			if ($expired) {
-				if (!in_array('expired_member', $user_data->roles)) {
-					$user_data->add_role('expired_member');
-					$user_membership->add_note('PWTC Members plugin assigned Expired Member role to this member.');
-				}
-				if (in_array('current_member', $user_data->roles)) {
-					$user_data->remove_role('current_member');
-				}
-			}
-			else {
-				if (!in_array('current_member', $user_data->roles)) {
-					$user_data->add_role('current_member');
-					$user_membership->add_note('PWTC Members plugin assigned Current Member role to this member.');
-				}
-				if (in_array('expired_member', $user_data->roles)) {
-					$user_data->remove_role('expired_member');
-				}
-			}
-		}
-	}
-
-	public static function team_created_callback2($team) {
-		$end_date = $team->get_membership_end_date();
-		$user_memberships = $team->get_user_memberships();
-		foreach ( $user_memberships as $user_membership ) {
-			$user_membership->add_note('Team saved, end date is ' . $end_date);
 		}
 	}
 
@@ -1541,20 +1499,6 @@ class PwtcMembers {
 		update_option('pwtc_members_options', $data);
 	}
 
-	/*************************************************************/
-	/* Plugin capabilities management functions.
-	/*************************************************************/
-
-	public static function add_caps_admin_role() {
-		$admin = get_role('administrator');
-		self::write_log('PWTC Members plugin added capabilities to administrator role');
-	}
-
-	public static function remove_caps_admin_role() {
-		$admin = get_role('administrator');
-		self::write_log('PWTC Members plugin removed capabilities from administrator role');
-	}
-
     /*************************************************************/
     /* Plugin installation and removal functions.
     /*************************************************************/
@@ -1568,12 +1512,10 @@ class PwtcMembers {
 		if (self::get_plugin_options() === false) {
 			self::create_default_plugin_options();
 		}
-		//self::add_caps_admin_role();
     }
     
 	public static function plugin_deactivation( ) {
 		self::write_log( 'PWTC Members plugin deactivated' );
-		//self::remove_caps_admin_role();
     }
     
 	public static function plugin_uninstall() {
