@@ -31,6 +31,9 @@ class PwtcMembers_Admin {
 		add_action( 'wp_ajax_pwtc_members_fix_invalid_members', 
 			array( 'PwtcMembers_Admin', 'fix_invalid_members_callback') );
 
+		add_action( 'wp_ajax_pwtc_members_adjust_family_members', 
+			array( 'PwtcMembers_Admin', 'adjust_family_members_callback') );
+
 		add_action( 'wp_ajax_pwtc_members_fix_missing_members', 
 			array( 'PwtcMembers_Admin', 'fix_missing_members_callback') );
 
@@ -108,6 +111,14 @@ class PwtcMembers_Admin {
     	$function = array( 'PwtcMembers_Admin', 'page_missing_members');
 		add_submenu_page($parent_menu_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
 
+		$page_title = $plugin_options['plugin_menu_label'] . ' - Adjust Family Memberships';
+		$menu_title = '
+		Adjust Families';
+    	$menu_slug = 'pwtc_members_adjust_families';
+    	$capability = 'manage_options';
+    	$function = array( 'PwtcMembers_Admin', 'page_adjust_families');
+		add_submenu_page($parent_menu_slug, $page_title, $menu_title, $capability, $menu_slug, $function);
+
 		$page_title = $plugin_options['plugin_menu_label'] . ' - Test Confirmation Email';
     	$menu_title = 'Test Confirm Email';
     	$menu_slug = 'pwtc_members_test_email';
@@ -149,6 +160,12 @@ class PwtcMembers_Admin {
 		$plugin_options = PwtcMembers::get_plugin_options();
 		$capability = 'manage_options';
 		include('admin-missing-members.php');
+	}
+
+	public static function page_adjust_families() {
+		$plugin_options = PwtcMembers::get_plugin_options();
+		$capability = 'manage_options';
+		include('admin-adjust-family-members.php');
 	}
 
 	public static function page_test_email() {
@@ -643,6 +660,60 @@ class PwtcMembers_Admin {
 					'status' => $msg
 				);
 			}		
+		}
+		echo wp_json_encode($response);
+        wp_die();
+	}
+
+	public static function adjust_family_members_callback() {
+		if (!current_user_can('manage_options')) {
+			$response = array(
+				'status' => 'Adjust failed - user access denied.'
+			);		
+		}
+		else if (!isset($_POST['nonce'])) {
+			$response = array(
+				'status' => 'Adjust failed - AJAX arguments missing.'
+			);
+		}
+		else {
+			$nonce = $_POST['nonce'];	
+			if (!wp_verify_nonce($nonce, 'pwtc_members_adjust_family_members')) {
+				$response = array(
+					'status' => 'Adjust failed - nonce security check failed.'
+				);
+			}
+			else {
+				$query_args = [
+					'nopaging'    => true,
+					'post_status' => 'any',
+					'post_type' => 'wc_memberships_team',
+				];			
+				$the_query = new WP_Query($query_args);
+				if ( $the_query->have_posts() ) {
+					$count = 0;
+					while ( $the_query->have_posts() ) {
+						$the_query->the_post();
+						$team = wc_memberships_for_teams_get_team( get_the_ID() );
+						if ($team) {
+							$user_memberships = $team->get_user_memberships();
+							foreach ( $user_memberships as $user_membership ) {
+								PwtcMembers::adjust_team_member_data_callback(false, $team, $user_membership);
+							}
+							$count++;	
+						}
+					}
+					wp_reset_postdata();
+					$response = array(
+						'status' => 'Adjusted ' . $count . ' family memberships.'
+					);	
+				}
+				else {
+					$response = array(
+						'status' => 'No family memberships found.'
+					);
+				}
+			}
 		}
 		echo wp_json_encode($response);
         wp_die();
