@@ -61,6 +61,15 @@ class PwtcMembers {
 		add_action('wc_memberships_for_teams_team_created', 
 			array('PwtcMembers', 'adjust_team_members_data_callback' ));
 
+		add_action('woocommerce_before_cart', 
+			array('PwtcMembers', 'validate_checkout_callback' ));
+
+		add_action('woocommerce_checkout_process', 
+			array('PwtcMembers', 'validate_checkout_callback' ));
+
+		add_filter('wc_memberships_for_teams_team_can_invite_user', 
+			array('PwtcMembers', 'validate_family_invitation_callback'), 10, 4);
+
 		/* Register shortcode callbacks */
 
 		add_shortcode('pwtc_member_directory', 
@@ -338,6 +347,77 @@ class PwtcMembers {
 		foreach ( $user_memberships as $user_membership ) {
 			self::adjust_team_member_data_callback(false, $team, $user_membership);
 		}	
+	}
+
+	public static function validate_checkout_callback() {
+		$membership_cnt = 0;
+		if ( sizeof( WC()->cart->get_cart() ) > 0 ) {
+			foreach ( WC()->cart->get_cart() as $cart_item_key => $values ) {
+				$product = wc_get_product( $values['product_id'] );
+				if (has_term('memberships', 'product_cat', $product->get_id())) {
+					$membership_cnt++;
+				}
+			}
+		}
+		if ($membership_cnt > 1) {
+			$msg = 'You may not purchase more than one membership product at a time.';
+			if (is_cart()) {
+				wc_print_notice($msg, 'error');
+			} 
+			else {
+				wc_add_notice($msg, 'error');
+			}
+		}
+		else if ($membership_cnt == 1) {
+			$current_user = wp_get_current_user();
+			if ( $current_user->ID > 0 ) {
+				$active_membership = false;
+				$team_owner = false;
+				$team_member = false;
+				$statuses = array(
+					'status' => array( 'active', 'complimentary', 'pending', 'free_trial' ),
+				);
+				$active_memberships = wc_memberships_get_user_memberships( $current_user->ID, $statuses );
+				if ( !empty( $active_memberships ) ) {
+					$active_membership = true;
+				}
+				$teams = wc_memberships_for_teams_get_teams( $current_user->ID, array( 'role' => 'owner' ) );
+				if ($teams && !empty( $teams ) ) {
+					$team_owner = true;
+				}
+				else {
+					$teams = wc_memberships_for_teams_get_teams( $current_user->ID, array( 'role' => 'member' ) );
+					if ($teams && !empty( $teams ) ) {
+						$team_member = true;
+					}
+				}
+				if ($team_member) {
+					$msg = 'You are a non-owner member of a family; you are not allowed to purchase any membership products.';
+					if (is_cart()) {
+						wc_print_notice($msg, 'error');
+					} 
+					else {
+						wc_add_notice($msg, 'error');
+					}
+				}
+				else if ($active_membership) {
+					$msg = 'You currently have an active membership, are you sure you want to purchase another?';
+					if (is_cart()) {
+						wc_print_notice($msg, 'notice');
+					} 		
+				}
+			}
+		}
+	}
+
+	public static function validate_family_invitation_callback($can_be_managed, $user, $team, $role) {
+		if ( $user ) {
+			$memberships = wc_memberships_get_user_memberships( $user->ID );
+			if ( !empty( $memberships ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/*************************************************************/
