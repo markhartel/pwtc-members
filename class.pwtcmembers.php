@@ -392,7 +392,7 @@ class PwtcMembers {
 					}
 				}
 				if ($team_member) {
-					$msg = 'You are a non-owner member of a family; you are not allowed to purchase any membership products.';
+					$msg = 'You are a non-owning member of a family; you are not allowed to purchase any membership products.';
 					if (is_cart()) {
 						wc_print_notice($msg, 'error');
 					} 

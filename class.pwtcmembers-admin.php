@@ -176,7 +176,7 @@ class PwtcMembers_Admin {
 
 	public static function download_user_csv() {
 		if (current_user_can('manage_options')) {
-			if (isset($_POST['includes']) and isset($_POST['excludes']) and isset($_POST['riderid']) and isset($_POST['file'])) {
+			if (isset($_POST['includes']) and isset($_POST['excludes']) and isset($_POST['riderid']) and isset($_POST['nameset']) and isset($_POST['file'])) {
 				if (!empty($_POST['file'])) {
 					$details = isset($_POST['details']) and $_POST['details'] == 'true' ? true : false;
 					$query_args = self::get_export_user_query_args();
@@ -214,8 +214,8 @@ class PwtcMembers_Admin {
 		if (!empty($excludes)) {
 			$query_args['role__not_in'] = $excludes;
 		}
+		$query_args['meta_query'] = [];
 		if ($_POST['riderid'] == 'not_set') {
-			$query_args['meta_query'] = [];
 			$query_args['meta_query'][] = [
 				'relation' => 'OR',
 				[
@@ -229,7 +229,6 @@ class PwtcMembers_Admin {
 			];			
 		}
 		else if ($_POST['riderid'] == 'set') {
-			$query_args['meta_query'] = [];
 			$query_args['meta_query'][] = [
 				'relation' => 'AND',
 				[
@@ -238,6 +237,34 @@ class PwtcMembers_Admin {
 				],
 				[
 					'key'     => 'rider_id',
+					'value'   => '',
+					'compare' => '!='   
+				] 
+			];			
+		}
+		if ($_POST['nameset'] == 'not_set') {
+			$query_args['meta_query'][] = [
+				'relation' => 'AND',
+				[
+					'key'     => 'first_name',
+					'value'   => '' 
+				],
+				[
+					'key'     => 'last_name',
+					'value'   => ''    
+				] 
+			];			
+		}
+		else if ($_POST['nameset'] == 'set') {
+			$query_args['meta_query'][] = [
+				'relation' => 'OR',
+				[
+					'key'     => 'first_name',
+					'value'   => '',
+					'compare' => '!='   
+				],
+				[
+					'key'     => 'last_name',
 					'value'   => '',
 					'compare' => '!='   
 				] 
@@ -262,6 +289,7 @@ class PwtcMembers_Admin {
 					'includes' => $query['includes'],
 					'excludes' => $query['excludes'],
 					'riderid' => $query['riderid'],
+					'nameset' => $query['nameset'],
 					'file' => $query['file']
 				);
 				echo wp_json_encode($response);	
@@ -288,22 +316,23 @@ class PwtcMembers_Admin {
 
 	public static function fetch_canned_queries() {
 		$results = [
-			'current_members' => self::create_canned_query('Current Members', 'current_member', '', 'off', 'current_members'),
-			'expired_members' => self::create_canned_query('Expired Members', 'expired_member', '', 'off', 'expired_members'),
-			'ride_leaders' => self::create_canned_query('Ride Leaders', 'ride_leader', '', 'off', 'ride_leaders'),
-			'no_riderid' => self::create_canned_query('Members Without Rider IDs', 'current_member expired_member', '', 'not_set', 'no_riderid'),
-			'bogus_users' => self::create_canned_query('Bogus Users', '', 'administrator current_member expired_member customer ride_leader ride_captain statistician qr_editor', 'not_set', 'bogus_users'),
-			'custom_query' => self::create_canned_query('Custom Query', '', '', 'off', '')
+			'current_members' => self::create_canned_query('Current Members', 'current_member', '', 'off', 'name_off', 'current_members'),
+			'expired_members' => self::create_canned_query('Expired Members', 'expired_member', '', 'off', 'name_off', 'expired_members'),
+			'ride_leaders' => self::create_canned_query('Ride Leaders', 'ride_leader', '', 'off', 'name_off', 'ride_leaders'),
+			'no_riderid' => self::create_canned_query('Members Without Rider IDs', 'current_member expired_member', '', 'not_set', 'name_off', 'no_riderid'),
+			'bogus_users' => self::create_canned_query('Bogus Users', '', 'administrator current_member expired_member customer ride_leader ride_captain statistician qr_editor', 'not_set', 'name_not_set', 'bogus_users'),
+			'custom_query' => self::create_canned_query('Custom Query', '', '', 'off', 'name_off', '')
 		];
 		return $results;
 	}
 
-	public static function create_canned_query($label, $includes, $excludes, $riderid, $file) {
+	public static function create_canned_query($label, $includes, $excludes, $riderid, $nameset, $file) {
 		return [
 			'label' => $label,
 			'includes' => $includes,
 			'excludes' => $excludes,
 			'riderid' => $riderid,
+			'nameset' => $nameset,
 			'file' => $file
 		];
 	}
@@ -755,7 +784,7 @@ class PwtcMembers_Admin {
 				'error' => 'User show failed - user access denied.'
 			);
 		}
-		else if (!isset($_POST['includes']) or !isset($_POST['excludes']) or !isset($_POST['riderid'])) {
+		else if (!isset($_POST['includes']) or !isset($_POST['excludes']) or !isset($_POST['riderid']) or !isset($_POST['nameset'])) {
 			$response = array(
 				'error' => 'User show failed - AJAX arguments missing.'
 			);

@@ -53,6 +53,7 @@ jQuery(document).ready(function($) {
             $("#export-user-section .query-frm textarea[name='excludes']").val(res.excludes);
             $("#export-user-section .query-frm input[name='file']").val(res.file);
             $("#export-user-section .query-frm #" + res.riderid).prop("checked", true);
+            $("#export-user-section .query-frm #" + res.nameset).prop("checked", true);
             $("#export-user-section .query-div").show();
         }
 	}   
@@ -92,13 +93,15 @@ jQuery(document).ready(function($) {
         var includes = $("#export-user-section .query-frm textarea[name='includes']").val().trim();
         var excludes = $("#export-user-section .query-frm textarea[name='excludes']").val().trim();
         var riderid = $("#export-user-section .query-frm input[name='riderid']:checked").val();
+        var nameset = $("#export-user-section .query-frm input[name='nameset']:checked").val();
         $('#export-user-section .users-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
         var action = '<?php echo admin_url('admin-ajax.php'); ?>';
         var data = {
             'action': 'pwtc_members_show_users',
             'includes': includes,
             'excludes': excludes,
-            'riderid': riderid
+            'riderid': riderid,
+            'nameset': nameset
         };
         $.post(action, data, show_users_cb);
 });
@@ -139,6 +142,19 @@ jQuery(document).ready(function($) {
             <span class="pwtc-members-checkbox-wrap">
                 <input type="radio" id="not_set" name="riderid" value="not_set"/>
                 <label for="not_set">ID Not Set</label>
+            </span>
+            <span>Detect First/Last Name</span>
+            <span class="pwtc-members-checkbox-wrap">
+                <input type="radio" id="name_off" name="nameset" value="off" checked/>
+                <label for="off">Off</label>
+            </span>
+            <span class="pwtc-members-checkbox-wrap">
+                <input type="radio" id="name_set" name="nameset" value="set"/>
+                <label for="set">Name Set</label>
+            </span>
+            <span class="pwtc-members-checkbox-wrap">
+                <input type="radio" id="name_not_set" name="nameset" value="not_set"/>
+                <label for="not_set">Name Not Set</label>
             </span>
             <span>CSV File Name</span>
             <input type="text" name="file" value="" required/>
