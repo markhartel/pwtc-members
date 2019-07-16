@@ -61,6 +61,7 @@ class PwtcMembers {
 		add_action('wc_memberships_for_teams_team_created', 
 			array('PwtcMembers', 'adjust_team_members_data_callback' ));
 
+		/*
 		add_action('woocommerce_before_cart', 
 			array('PwtcMembers', 'validate_checkout_callback' ));
 
@@ -69,6 +70,7 @@ class PwtcMembers {
 
 		add_filter('wc_memberships_for_teams_team_can_invite_user', 
 			array('PwtcMembers', 'validate_family_invitation_callback'), 10, 4);
+		*/
 
 		/* Register shortcode callbacks */
 
@@ -223,10 +225,10 @@ class PwtcMembers {
 		$email = self::build_confirmation_email($membership_plan, $user_data, $membership);
 		$status = wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
 		if ($status) {
-			$user_membership->add_note('PWTC Members plugin sent confirmation email to this member, send was successful.');
+			$membership->add_note('PWTC Members plugin sent confirmation email to this member, send was successful.');
 		}
 		else {
-			$user_membership->add_note('PWTC Members plugin sent confirmation email to this member, send failed.');
+			$membership->add_note('PWTC Members plugin sent confirmation email to this member, send failed.');
 		}
 	}
 
