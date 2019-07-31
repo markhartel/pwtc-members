@@ -61,6 +61,17 @@ class PwtcMembers {
 		add_action('wc_memberships_for_teams_team_created', 
 			array('PwtcMembers', 'adjust_team_members_data_callback' ));
 
+/*
+		add_action( 'woocommerce_thankyou', 
+			array('PwtcMembers', 'order_complete_callback' ) );
+
+		add_filter( 'woocommerce_persistent_cart_enabled', 
+			array('PwtcMembers', 'disable_persistent_cart_callback' ) );
+*/
+
+//		add_action( 'wp_logout', 
+//			array('PwtcMembers', 'user_logout_callback' ) );		
+
 		/*
 		add_action('woocommerce_before_cart', 
 			array('PwtcMembers', 'validate_checkout_callback' ));
@@ -350,6 +361,23 @@ class PwtcMembers {
 			self::adjust_team_member_data_callback(false, $team, $user_membership);
 		}	
 	}
+
+	public static function order_complete_callback($order_id) { 
+		if ( !$order_id ) {
+			return;
+		}
+		$order = wc_get_order( $order_id );
+		$order->update_status( 'completed' );
+		//WC()->cart->empty_cart();
+	}
+
+	public static function disable_persistent_cart_callback() { 
+		return false;
+	}
+
+//	public static function user_logout_callback() { 
+//		WC()->cart->empty_cart();
+//	}
 
 	public static function validate_checkout_callback() {
 		$membership_cnt = 0;
