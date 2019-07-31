@@ -816,7 +816,9 @@ class PwtcMembers_Admin {
 						if ($team) {
 							$user_memberships = $team->get_user_memberships();
 							foreach ( $user_memberships as $user_membership ) {
-								PwtcMembers::adjust_team_member_data_callback(false, $team, $user_membership);
+								if (!$detect_only) {
+									PwtcMembers::adjust_team_member_data_callback(false, $team, $user_membership);
+								}
 							}
 							$count++;	
 						}
