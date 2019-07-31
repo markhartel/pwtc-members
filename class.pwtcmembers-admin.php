@@ -803,6 +803,7 @@ class PwtcMembers_Admin {
 			else {
 				$detect_only = $_POST['detect_only'] == 'true' ? true : false;
 				$count = 0;
+				$unchanged = 0;
 				$query_args = [
 					'nopaging'    => true,
 					'post_status' => 'any',
@@ -814,13 +815,32 @@ class PwtcMembers_Admin {
 						$the_query->the_post();
 						$team = wc_memberships_for_teams_get_team( get_the_ID() );
 						if ($team) {
+							$team_end_date = $team->get_membership_end_date('timestamp');
 							$user_memberships = $team->get_user_memberships();
 							foreach ( $user_memberships as $user_membership ) {
-								if (!$detect_only) {
-									PwtcMembers::adjust_team_member_data_callback(false, $team, $user_membership);
+								$user_end_date = $user_membership->get_end_date('timestamp');
+								if ($team_end_date and $user_end_date) {
+									$diff = abs($user_end_date - $team_end_date);
+								}
+								else if (!$team_end_date and $user_end_date) {
+									$diff = 99999;
+								}
+								else if ($team_end_date and !$user_end_date) {
+									$diff = 99999;
+								}
+								else {
+									$diff = 0;
+								}
+								if ($diff > 86400) {
+									if (!$detect_only) {
+										PwtcMembers::adjust_team_member_data_callback(false, $team, $user_membership);
+									}
+									$count++;
+								}
+								else {
+									$unchanged++;
 								}
 							}
-							$count++;	
 						}
 					}
 					wp_reset_postdata();
@@ -831,10 +851,12 @@ class PwtcMembers_Admin {
 				else {
 					$action_str = 'adjusted';
 				}
+				$msg = '' . $count . ' family members ' . $action_str . 
+					'. ' . $unchanged . ' family members unchanged.';
 				$response = array(
-					'status' => '' . $count . ' family memberships ' . $action_str . '.'
+					'status' => $msg
 				);	
-		}
+			}
 		}
 		echo wp_json_encode($response);
         wp_die();
