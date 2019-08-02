@@ -57,7 +57,7 @@ jQuery(document).ready(function($) {
 </script>
     <div id="adjust-dates-section">
         <div class="adjust-end-date">
-        <p>Adjust all memberships so that their expires date matches that of the family membership to which they belong.</p>
+        <p>Adjust all membership records so that their expiration date matches that of the family membership to which they belong.</p>
         <form class="adjust-frm  pwtc-members-stacked-form" action="<?php echo admin_url('admin-ajax.php'); ?>" method="POST">
             <span>Detect Only</span>
             <span class="pwtc-members-checkbox-wrap">
@@ -68,7 +68,7 @@ jQuery(document).ready(function($) {
         <p><div class="msg-div"></div></p>
         </div>
         <div class="adjust-start-date">
-        <p>Adjust all memberships so that their member since date matches the year that their rider ID was issued.</p>
+        <p>Adjust all membership records so that their start date matches the year that their rider ID was issued.</p>
         <form class="adjust-frm pwtc-members-stacked-form" action="<?php echo admin_url('admin-ajax.php'); ?>" method="POST">
             <span>Detect Only</span>
             <span class="pwtc-members-checkbox-wrap">

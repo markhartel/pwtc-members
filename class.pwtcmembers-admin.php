@@ -767,9 +767,9 @@ class PwtcMembers_Admin {
 				else {
 					$action_str = 'adjusted';
 				}
-				$msg = '' . $count1 . ' members from last century ' . $action_str . 
-					'. ' . $count2 . ' members from this century ' . $action_str .
-					'. ' . $unchanged . ' members unchanged.';
+				$msg = '' . $count1 . ' member mismatches from last century ' . $action_str . 
+					'. ' . $count2 . ' member mismatches from this century ' . $action_str .
+					'. ' . $unchanged . ' members already match and will not be changed.';
 				if ($multicount > 0) {
 					$msg .= ' ' . $multicount . ' users with multiple memberships detected.';
 				}
@@ -851,8 +851,8 @@ class PwtcMembers_Admin {
 				else {
 					$action_str = 'adjusted';
 				}
-				$msg = '' . $count . ' family members ' . $action_str . 
-					'. ' . $unchanged . ' family members unchanged.';
+				$msg = '' . $count . ' family member mismatches ' . $action_str . 
+					'. ' . $unchanged . ' family members already match and will not be changed.';
 				$response = array(
 					'status' => $msg
 				);	
