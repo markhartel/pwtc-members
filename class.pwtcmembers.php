@@ -8,6 +8,9 @@ class PwtcMembers {
 		if ( !self::$initiated ) {
 			self::init_hooks();
 		}
+		if ( isset( $_GET['empty-cart'] ) ) {
+			wc_empty_cart();
+		}	
     }
     
 	private static function init_hooks() {
@@ -61,18 +64,12 @@ class PwtcMembers {
 		add_action('wc_memberships_for_teams_team_created', 
 			array('PwtcMembers', 'adjust_team_members_data_callback' ));
 
-/*
 		add_action( 'woocommerce_thankyou', 
 			array('PwtcMembers', 'order_complete_callback' ) );
 
 		add_filter( 'woocommerce_persistent_cart_enabled', 
 			array('PwtcMembers', 'disable_persistent_cart_callback' ) );
-*/
 
-//		add_action( 'wp_logout', 
-//			array('PwtcMembers', 'user_logout_callback' ) );		
-
-		/*
 		add_action('woocommerce_before_cart', 
 			array('PwtcMembers', 'validate_checkout_callback' ));
 
@@ -81,7 +78,9 @@ class PwtcMembers {
 
 		add_filter('wc_memberships_for_teams_team_can_invite_user', 
 			array('PwtcMembers', 'validate_family_invitation_callback'), 10, 4);
-		*/
+
+		add_action( 'woocommerce_cart_coupon', 
+			array('PwtcMembers', 'empty_cart_button_callback' ));
 
 		/* Register shortcode callbacks */
 
@@ -368,16 +367,11 @@ class PwtcMembers {
 		}
 		$order = wc_get_order( $order_id );
 		$order->update_status( 'completed' );
-		//WC()->cart->empty_cart();
 	}
 
 	public static function disable_persistent_cart_callback() { 
 		return false;
 	}
-
-//	public static function user_logout_callback() { 
-//		WC()->cart->empty_cart();
-//	}
 
 	public static function validate_checkout_callback() {
 		$membership_cnt = 0;
@@ -448,6 +442,10 @@ class PwtcMembers {
 			}
 		}
 		return true;
+	}
+
+	public static function empty_cart_button_callback() {
+		echo '<a href="' . esc_url( add_query_arg( 'empty-cart', 'yes' ) ) . '" class="button">Empty cart</a>';
 	}
 
 	/*************************************************************/
