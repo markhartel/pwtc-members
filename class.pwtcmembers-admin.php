@@ -722,6 +722,7 @@ class PwtcMembers_Admin {
 				$unchanged = 0;
 				$multicount = 0;
 				$results = PwtcMembers::fetch_users_with_memberships();
+				$users = array();
 				foreach ($results as $item) {
 					$userid = $item[0];
 					$rider_id = get_field('rider_id', 'user_'.$userid);
@@ -742,7 +743,19 @@ class PwtcMembers_Admin {
 							}
 							$start = $membership->get_start_date();
 							if (!$start or strncmp($start, $year, 4) !== 0) {
-								if (!$detect_only) {
+								if ($detect_only) {
+									$member = get_userdata($userid);
+									$item = array(
+										'userid' => $userid,
+										'first_name' => $member->first_name,
+										'last_name' => $member->last_name,
+										'user_email' => $member->user_email,
+										'startdate' => $start,
+										'riderid' => $rider_id
+									);
+									$users[] = $item;
+								}
+								else {
 									$membership->set_start_date($year . '-07-01 00:00:00');
 								}
 								if ($y > 50) {
@@ -774,6 +787,7 @@ class PwtcMembers_Admin {
 					$msg .= ' ' . $multicount . ' users with multiple memberships detected.';
 				}
 				$response = array(
+					'users' => $users,
 					'status' => $msg
 				);
 			}		
@@ -802,6 +816,7 @@ class PwtcMembers_Admin {
 			}
 			else {
 				$detect_only = $_POST['detect_only'] == 'true' ? true : false;
+				$users = array();
 				$count = 0;
 				$unchanged = 0;
 				$query_args = [
@@ -832,7 +847,22 @@ class PwtcMembers_Admin {
 									$diff = 0;
 								}
 								if ($diff > 86400) {
-									if (!$detect_only) {
+									if ($detect_only) {
+										$userid = $user_membership->get_user_id();
+										$member = get_userdata($userid);
+										$enddate = $user_membership->get_local_end_date('mysql', false);
+										$teamend = $team->get_local_membership_end_date('mysql');
+										$item = array(
+											'userid' => $userid,
+											'first_name' => $member->first_name,
+											'last_name' => $member->last_name,
+											'user_email' => $member->user_email,
+											'end_date' => $enddate,
+											'team_end' => $teamend 
+										);
+										$users[] = $item;
+									}
+									else {
 										PwtcMembers::adjust_team_member_data_callback(false, $team, $user_membership);
 									}
 									$count++;
@@ -854,6 +884,7 @@ class PwtcMembers_Admin {
 				$msg = '' . $count . ' family member mismatches ' . $action_str . 
 					'. ' . $unchanged . ' family members already match and will not be changed.';
 				$response = array(
+					'users' => $users,
 					'status' => $msg
 				);	
 			}

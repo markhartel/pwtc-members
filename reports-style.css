@@ -3,6 +3,10 @@ body.pwtc-members-waiting * {
     cursor: progress;
   }
   
+  .pwtc-members-hidden {
+    display: none;  
+  }
+
   .pwtc-members-search-sec {
     border: 1px solid;
     border-radius: 5px;
