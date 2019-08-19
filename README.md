@@ -62,6 +62,8 @@ Use this page to detect all user accounts that have multiple memberships. Any su
 Use this page to detect any user accounts that do not have a membership but are erroneously marked with the Current Member or Expired Member role. If any are found, you are given the option to fix these records.
 ### Missing Membership Roles
 Use this page to detect any user accounts that have a membership but are missing the proper Current Member or Expired Member role. If any are found, you are given the option to fix these records.
+### Adjust Member Dates
+Use this page to detect all members whos expiration date does not match that of the family membership to which they belong and whos start date does not match the year that their rider ID was issued.
 ### Test Confirmation Email
 Use this page to test the membership confirmation email mechanism.
 
@@ -74,6 +76,11 @@ Customize the WooCommerce Membership plugin to support these additional features
 - Fix the expiration date display for family members on the **My Account** page
 - Exclude membership products from the **Store** page
 - Add the rider ID, release accepted flag and billing phone number to a member's details box
+- Validate the contents of the shopping cart both when it is displayed and during checkout
+- Prevent a family membership owner from sending a join invitation to a user that already has a membership
+- Disable WooCommerce persistent shopping cart feature
+- Automatically complete all WooCommerce orders 
+- Add a convenience button to the shopping cart page that will empty the cart
 
 ## Package Files Used By This Plugin
 - `README.md` *this file*
@@ -87,5 +94,6 @@ Customize the WooCommerce Membership plugin to support these additional features
 - `admin-lookup-users.php` *client-side logic for Lookup Users admin page*
 - `admin-missing-members.php` *client-side logic for Missing Membership Roles admin page*
 - `admin-multi-members.php` *client-side logic for Multiple Memberships admin page*
+- `admin-adjust-family-members.php` *client-side logic for Adjust Member Dates admin page*
 - `admin-test-email.php` *client-side logic for Test Confirmation Email admin page*
 - `reports-style.css` *stylesheet for report shortcodes*
