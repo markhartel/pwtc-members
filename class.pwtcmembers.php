@@ -852,7 +852,7 @@ class PwtcMembers {
 						break;
 					}
 					?>
-					<li><?php echo get_the_author(); ?> (<?php echo $start->format('M j'); ?>)</li>
+					<li><?php echo get_the_author_meta('first_name'); ?> <?php echo get_the_author_meta('last_name'); ?> (<?php echo $start->format('M j'); ?>)</li>
 					<?php						
 				}
 				?>
