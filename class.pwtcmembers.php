@@ -516,7 +516,7 @@ class PwtcMembers {
 			<?php } ?>
 
 			function populate_members_table(members) {
-				var header = '<table class="pwtc-mapdb-rwd-table"><tr><th>Member Name</th><th>Account Email</th><th>Account Phone</th>' +
+				var header = '<table class="pwtc-members-rwd-table"><tr><th>Member Name</th><th>Account Email</th><th>Account Phone</th>' +
 				<?php if ($can_view_address) { ?>
 				'<th>Actions</th>' +
 				<?php } ?>
