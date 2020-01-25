@@ -454,7 +454,7 @@ class PwtcMembers {
 
 	// Generates the [pwtc_member_directory] shortcode.
 	public static function shortcode_member_directory($atts) {
-		$a = shortcode_atts(array('limit' => 10, 'mode' => 'readonly', 'privacy' => 'off'), $atts);
+		$a = shortcode_atts(array('limit' => 10, 'mode' => 'readonly', 'privacy' => 'off', 'showexpired' => 'off'), $atts);
 		$current_user = wp_get_current_user();
 		if ( 0 == $current_user->ID ) {
 			return '<div class="callout small warning"><p>Please log in to view the member directory.</p></div>';
@@ -612,7 +612,8 @@ class PwtcMembers {
 				var data = {
 					'action': 'pwtc_member_lookup',
 					'privacy': '<?php echo $a['privacy'] ?>',
-					'limit': <?php echo $a['limit'] ?>
+					'limit': <?php echo $a['limit'] ?>,
+					'showexpired': <?php echo $a['showexpired'] ?>
 				};
 				if (mode != 'search') {
 					data.role = $("#pwtc-member-search-div .search-frm input[name='role_sav']").val();
@@ -1093,9 +1094,10 @@ class PwtcMembers {
 				'error' => 'Member fetch failed - user access denied.'
 			);		
 		}
-		else if (isset($_POST['limit'])) {
+		else if (isset($_POST['limit']) and isset($_POST['showexpired'])) {
 			$exclude = false;
 			$hide = false;
+			$showexpired = false;
 			if (isset($_POST['privacy'])) {
 				if ($_POST['privacy'] == 'exclude') {
 					$exclude = true;
@@ -1104,7 +1106,10 @@ class PwtcMembers {
 					$hide = true;
 				}
 			}
-			$query_args = self::get_user_query_args($exclude);
+			if ($_POST['showexpired'] == 'on') {
+				$showexpired = true;
+			}
+			$query_args = self::get_user_query_args($exclude, $showexpired);
 
 			$limit = intval($_POST['limit']);
 			$query_args['number'] = $limit;
@@ -1180,13 +1185,19 @@ class PwtcMembers {
         wp_die();
 	}
 
-	public static function get_user_query_args($exclude = false) {
+	public static function get_user_query_args($exclude = false, $showexpired = false) {
         $query_args = [
             'meta_key' => 'last_name',
             'orderby' => 'meta_value',
-			'order' => 'ASC',
-			'role__in' => ['current_member', 'expired_member']
+			'order' => 'ASC'
 		];
+
+		if ($showexpired) {
+			$query_args['role__in'] = ['current_member', 'expired_member'];
+		}
+		else {
+			$query_args['role__in'] = ['current_member'];
+		}
 
 		if ($exclude) {
 			if (!isset($query_args['meta_query'])) {
