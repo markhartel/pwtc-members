@@ -613,7 +613,7 @@ class PwtcMembers {
 					'action': 'pwtc_member_lookup',
 					'privacy': '<?php echo $a['privacy'] ?>',
 					'limit': <?php echo $a['limit'] ?>,
-					'showexpired': <?php echo $a['showexpired'] ?>
+					'showexpired': '<?php echo $a['showexpired'] ?>'
 				};
 				if (mode != 'search') {
 					data.role = $("#pwtc-member-search-div .search-frm input[name='role_sav']").val();
