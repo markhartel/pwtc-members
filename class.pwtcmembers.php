@@ -36,6 +36,9 @@ class PwtcMembers {
 			'pwtc_members_format_phone_number' );
 		add_filter( 'woocommerce_process_checkout_field_billing_phone',
 			'pwtc_members_format_phone_number' );
+		
+		add_filter('woocommerce_get_terms_and_conditions_checkbox_text', 
+			array('PwtcMembers', 'get_terms_and_conditions_checkbox_text_callback'));
 
 		add_filter( 'wc_memberships_members_area_my_membership_details', 
 			array( 'PwtcMembers', 'members_area_membership_details_callback' ), 10, 2 );
@@ -149,6 +152,10 @@ class PwtcMembers {
 	/* Wordpress/woocommerce customization callback functions
 	/*************************************************************/
 
+	public static function get_terms_and_conditions_checkbox_text_callback($text) {
+		return 'I have read the [terms] of riding with the Portland Bicycling Club, and by checking this box, agree to the release of claims contained within.';
+	}
+	
 	// Set "Release Accepted" field in user profile upon checkout.
 	public static function checkout_update_user_meta_callback ($customer_id) {
 		update_field('release_accepted', true, 'user_'.$customer_id);
