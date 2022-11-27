@@ -1553,6 +1553,7 @@ class PwtcMembers {
 					if (in_array('expired_member', $info->roles) or 
 						in_array('current_member', $info->roles)) {
 						$fix_roles = true;
+						$note = 'no membership, fix roles';
 					}
 				}
 				else if (count($memberships) > 1) {
@@ -1564,18 +1565,21 @@ class PwtcMembers {
 					$is_expired = pwtc_members_is_expired($memberships[0]);
 					if ($is_expired and !in_array('expired_member', $info->roles)) {
 						$fix_roles = true;
+						$note = 'membership expired, fix roles';
 					}
 					if (!$is_expired and !in_array('current_member', $info->roles)) {
 						$fix_roles = true;
+						$note = 'membership active, fix roles';
 					}
 					if (in_array('expired_member', $info->roles) and 
 						in_array('current_member', $info->roles)) {
 						$fix_roles = true;
+						$note = 'membership exist, fix roles';
 					}
 				}
 			}
 			else {
-				$note = 'cannot access membership';
+				$note = 'cannot access membership functions';
 			}
 			$role = implode(", ", $info->roles);
 			$riderid = get_field('rider_id', 'user_'.$profile->ID);
