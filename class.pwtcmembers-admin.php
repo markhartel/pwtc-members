@@ -502,6 +502,26 @@ class PwtcMembers_Admin {
 		$users = $user_query->get_results();
 		return $users;
 	}
+	
+	public static function fetch_current_member_role_users() {
+		$query_args = [
+			'fields' => 'ID',
+			'role__in' => ['current_member']
+		];
+		$user_query = new WP_User_Query( $query_args );
+		$users = $user_query->get_results();
+		return $users;
+	}
+	
+	public static function fetch_expired_member_role_users() {
+		$query_args = [
+			'fields' => 'ID',
+			'role__in' => ['expired_member']
+		];
+		$user_query = new WP_User_Query( $query_args );
+		$users = $user_query->get_results();
+		return $users;
+	}
 
 	public static function fetch_nonmember_role_users() {
 		$query_args = [
