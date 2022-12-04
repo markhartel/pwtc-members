@@ -13,7 +13,7 @@ else {
     <div>
         <p>Use this page to detect all user accounts that have multiple memberships. Any such accounts should be corrected by the membership secretary to have only one membership.</p>
         <?php if (empty($results)) { ?>
-        <p>No users with multiple memberships found.</p>
+        <p>No users found with multiple memberships.</p>
         <?php } else { ?>
         <table class="pwtc-members-rwd-table">
             <caption>Users With Multiple Memberships</caption>
@@ -39,7 +39,7 @@ else {
         </table>
         <?php } ?>
         <?php if (empty($results2)) { ?>
-        <p>No users owning multiple family memberships found.</p>
+        <p>No users found owning multiple family memberships.</p>
         <?php } else { ?>
         <table class="pwtc-members-rwd-table">
             <caption>Users Owning Multiple Family Memberships</caption>
