@@ -41,7 +41,7 @@ jQuery(document).ready(function($) {
     <div id="missing-members-section">
         <p>Use this page to detect any user accounts that have a membership but are missing the proper <code>current_member</code> or <code>expired_member</code> role. If any are found, you are given the option to fix these records.</p>
         <?php if (empty($missing_members)) { ?>
-        <p>No users with missing memberships roles found.</p>
+        <p>No users found with missing memberships roles.</p>
         <?php } else { ?>
         <table class="pwtc-members-rwd-table">
             <caption>Users With Missing Membership Roles</caption>
