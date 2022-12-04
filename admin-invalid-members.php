@@ -41,7 +41,7 @@ jQuery(document).ready(function($) {
     <div id="invalid-members-section">
         <p>Use this page to detect any user accounts that do not have a membership but are erroneously marked with the <code>current_member</code> or <code>expired_member</code> role. If any are found, you are given the option to fix these records.</p>
         <?php if (empty($invalid_members)) { ?>
-        <p>No users with invalid memberships roles found.</p>
+        <p>No users found with invalid memberships roles.</p>
         <?php } else { ?>
         <table class="pwtc-members-rwd-table">
             <caption>Users With Invalid Membership Roles</caption>
