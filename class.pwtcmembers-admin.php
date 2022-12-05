@@ -716,6 +716,111 @@ class PwtcMembers_Admin {
 		echo wp_json_encode($response);
         wp_die();
 	}
+	
+	public static function detect_missing_members($fix_accounts=false) {
+		$missing_members = array();
+		$test_users = self::fetch_nonmember_role_users();
+		$results = PwtcMembers::fetch_users_with_memberships();
+		foreach ($results as $item) {
+			$userid = $item[0];
+			if (in_array($userid, $test_users)) {
+				if ($fix_accounts) {
+					$user_info = get_userdata( $userid ); 
+					if ($user_info) {
+						$memberships = wc_memberships_get_user_memberships($user_info->ID);
+						if (count($memberships) == 1) {
+							$membership = $memberships[0];
+							if (!in_array('customer', $user_info->roles)) {
+								$user_info->add_role('customer');
+							}
+							if (pwtc_members_is_expired($membership)) {
+								if (!in_array('expired_member', $user_info->roles)) {
+									$user_info->add_role('expired_member');
+								}
+								if (in_array('current_member', $user_info->roles)) {
+									$user_info->remove_role('current_member');
+								}
+							}
+							else {
+								if (!in_array('current_member', $user_info->roles)) {
+									$user_info->add_role('current_member');
+								}
+								if (in_array('expired_member', $user_info->roles)) {
+									$user_info->remove_role('expired_member');
+								}
+							}						
+						}
+					}	
+				}
+				else {
+					$missing_members[] = $userid;
+				}
+			}
+		}
+		return $missing_members;
+	}
+
+	public static function detect_invalid_current_members($fix_accounts=false) {
+		$invalid_current_members = array();
+		$current_members = self::fetch_current_member_role_users();
+		foreach ($current_members as $userid) {
+			$memberships = wc_memberships_get_user_memberships($userid);
+			if (count($memberships) == 1) {
+				$membership = $memberships[0];
+				if (pwtc_members_is_expired($membership)) {
+					if ($fix_accounts) {
+						$user_info = get_userdata($userid); 
+						if ($user_info) {
+							if (!in_array('customer', $user_info->roles)) {
+								$user_info->add_role('customer');
+							}
+							if (!in_array('expired_member', $user_info->roles)) {
+								$user_info->add_role('expired_member');
+							}
+							if (in_array('current_member', $user_info->roles)) {
+								$user_info->remove_role('current_member');
+							}
+						}
+					}
+					else {
+						$invalid_current_members[] = $userid;
+					}
+				}
+			}
+		}
+		return $invalid_current_members;		
+	}
+
+	public static function detect_invalid_expired_members($fix_accounts=false) {
+		$invalid_expired_members = array();
+		$expired_members = self::fetch_expired_member_role_users();
+		foreach ($expired_members as $userid) {
+			$memberships = wc_memberships_get_user_memberships($userid);
+			if (count($memberships) == 1) {
+				$membership = $memberships[0];
+				if (!pwtc_members_is_expired($membership)) {
+					if ($fix_accounts) {
+						$user_info = get_userdata($userid); 
+						if ($user_info) {
+							if (!in_array('customer', $user_info->roles)) {
+								$user_info->add_role('customer');
+							}
+							if (!in_array('current_member', $user_info->roles)) {
+								$user_info->add_role('current_member');
+							}
+							if (in_array('expired_member', $user_info->roles)) {
+								$user_info->remove_role('expired_member');
+							}
+						}
+					}
+					else {
+						$invalid_expired_members[] = $userid;
+					}
+				}
+			}
+		}
+		return $invalid_expired_members;
+	}
 
 	public static function adjust_member_since_date_callback() {
 		if (!current_user_can('manage_options')) {
