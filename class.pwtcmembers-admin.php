@@ -717,6 +717,32 @@ class PwtcMembers_Admin {
         wp_die();
 	}
 	
+	public static function detect_invalid_members($fix_accounts=false) {
+		$invalid_members = array();
+		$test_users = self::fetch_member_role_users();
+		$results = PwtcMembers::fetch_users_with_no_memberships();
+		foreach ($results as $item) {
+			$userid = $item[0];
+			if (in_array($userid, $test_users)) {
+				if ($fix_accounts) {
+					$user_info = get_userdata( $userid ); 
+					if ($user_info) {
+						if (in_array('expired_member', $user_info->roles)) {
+							$user_info->remove_role('expired_member');
+						}
+						if (in_array('current_member', $user_info->roles)) {
+							$user_info->remove_role('current_member');
+						}				
+					}	
+				}
+				else {
+					$invalid_members[] = $userid;
+				}
+			}
+		}
+		return $invalid_members;
+	}
+	
 	public static function detect_missing_members($fix_accounts=false) {
 		$missing_members = array();
 		$test_users = self::fetch_nonmember_role_users();
