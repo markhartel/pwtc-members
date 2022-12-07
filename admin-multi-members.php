@@ -38,6 +38,7 @@ else {
             ?>
         </table>
         <?php } ?>
+	<hr>
         <?php if (empty($results2)) { ?>
         <p>No users found owning multiple family memberships.</p>
         <?php } else { ?>
