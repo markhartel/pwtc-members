@@ -7,35 +7,18 @@ if (!current_user_can($capability)) {
 <?php   
 }
 else {
-    $invalid_members = array();
-    $test_users = self::fetch_member_role_users();
-    $results = PwtcMembers::fetch_users_with_no_memberships();
-    foreach ($results as $item) {
-        $userid = $item[0];
-        if (in_array($userid, $test_users)) {
-            $invalid_members[] = $userid;
+    if (isset($_POST['_wpnonce'])) {
+        if (wp_verify_nonce($_POST['_wpnonce'], 'pwtc_members_fix_invalid_members')) {
+            if (isset($_POST['fix_invalid_members'])) {
+                self::detect_invalid_members(true);
+            }
         }
     }
+	
+    $invalid_members = self::detect_invalid_members();
 ?>
 <script type="text/javascript">
 jQuery(document).ready(function($) { 
-
-	function fix_this_cb(response) {
-        var res = JSON.parse(response);
-        $('#invalid-members-section .msg-div').html(res.status);
-    }
-
-    $('#invalid-members-section .fix-frm').on('submit', function(evt) {
-        evt.preventDefault();
-        $('#invalid-members-section .msg-div').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
-        var action = $('#invalid-members-section .fix-frm').attr('action');
-        var data = {
-            'action': 'pwtc_members_fix_invalid_members',
-            'nonce': '<?php echo wp_create_nonce('pwtc_members_fix_invalid_members'); ?>'
-        };
-        $.post(action, data, fix_this_cb);
-    });
-
 });
 </script>
     <div id="invalid-members-section">
@@ -65,14 +48,13 @@ jQuery(document).ready(function($) {
             } 
             ?>
         </table>
-        <p>Fix the user accounts listed above.</p>
         <div>
-        <form class="fix-frm" action="<?php echo admin_url('admin-ajax.php'); ?>" method="POST">
-            <input type="submit" value="Fix This" class="button button-primary button-large"/>
+        <form method="POST">
+	    <?php wp_nonce_field('pwtc_members_fix_invalid_members'); ?>
+            <input type="submit" name="fix_invalid_members" value="Fix These User Accounts" class="button button-primary button-large"/>
         </form>
         </div>
-        <p><div class="msg-div"></div></p>
-        <?php } ?>
+	<?php } ?>
     </div>
 <?php
 }
