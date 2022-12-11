@@ -401,6 +401,7 @@ class PwtcMembers {
 		}
 		else if ($membership_cnt == 1) {
 			$current_user = wp_get_current_user();
+			$current_date = current_time('timestamp');
 			if ( $current_user->ID > 0 ) {
 				$active_membership = false;
 				$team_owner = false;
@@ -411,10 +412,12 @@ class PwtcMembers {
 				$active_memberships = wc_memberships_get_user_memberships( $current_user->ID, $statuses );
 				if ( !empty( $active_memberships ) ) {
 					$active_membership = true;
+					$end_date = $active_memberships[0]->get_local_end_date('timestamp');
 				}
 				$teams = wc_memberships_for_teams_get_teams( $current_user->ID, array( 'role' => 'owner' ) );
 				if ($teams && !empty( $teams ) ) {
 					$team_owner = true;
+					$end_date = $teams[0]->get_local_membership_end_date('timestamp');
 				}
 				else {
 					$teams = wc_memberships_for_teams_get_teams( $current_user->ID, array( 'role' => 'member' ) );
@@ -432,10 +435,12 @@ class PwtcMembers {
 					}
 				}
 				else if ($active_membership) {
-					$msg = 'You currently have an active membership, are you sure you want to purchase another?';
-					if (is_cart()) {
-						wc_print_notice($msg, 'notice');
-					} 		
+					if ($end_date - $current_date > 2592000) {
+						$msg = 'You have more than a month left in your current membership, are you sure that you want to purchase another?';
+						if (is_cart()) {
+							wc_print_notice($msg, 'notice');
+						}
+					}
 				}
 			}
 		}
