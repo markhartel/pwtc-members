@@ -239,14 +239,24 @@ class PwtcMembers {
 			return;			
 		}
 
-		$email = self::build_confirmation_email($membership_plan, $user_data, $membership);
-		$status = wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
-		if ($status) {
-			$membership->add_note('PWTC Members plugin sent confirmation email to this member, send was successful.');
+		if (get_field('send_membership_email', 'option')) {
+			$email = self::build_confirmation_email($membership_plan, $user_data, $membership);
+			$status = wp_mail($email['to'], $email['subject'], $email['message'], $email['headers']);
+			if ($status) {
+				$membership->add_note('PWTC Members plugin sent confirmation email to this member, send was successful.');
+			}
+			else {
+				$membership->add_note('PWTC Members plugin sent confirmation email to this member, send failed.');
+			}
 		}
-		else {
-			$membership->add_note('PWTC Members plugin sent confirmation email to this member, send failed.');
-		}
+		
+		$count1 = self::fetch_users_with_multi_memberships('wc_user_membership', true, $user_id);
+		$count2 = self::fetch_users_with_multi_memberships('wc_memberships_team', true, $user_id);
+		if ($count1 > 0 or $count2 > 0) {
+			$membership->add_note('PWTC Members plugin detected multiple memberships for this member.');
+			$name = $user_data->first_name . ' ' . $user_data->last_name;
+			self::multi_memberships_email($name);
+		}	
 	}
 
 	public static function membership_created_callback($membership_plan, $args = array()) {
@@ -1610,6 +1620,18 @@ class PwtcMembers {
 		}
 		return $users;
 	}
+	
+	public static function multi_memberships_email($name) {
+		//$email = 'mark_hartel@hotmail.com';
+		$email = get_field('membership_captain_email', 'option');
+		$subject = 'Multiple Memberships Detected';
+		$message = <<<EOT
+Warning: multiple memberships have been detected for member $name.<br>
+To verify, check the Multiple Memberships page under the Member Tools admin menu on the Portland Bicycling Club website.<br>
+EOT;
+		$headers = ['Content-type: text/html'];
+		return wp_mail($email, $subject , $message, $headers);
+	}	
 
 	/*************************************************************/
 	/* Plugin options access functions
