@@ -930,6 +930,10 @@ class PwtcMembers {
 			$team = wc_memberships_for_teams_get_user_membership_team($membership->get_id());
 		}
 		if ($team) {
+			$renew_link = $team->get_renew_membership_url();
+			$expiration_date = $team->get_local_membership_end_date('timestamp');
+			$team_name = $team->get_name();
+			$renew_msg = 'You can either <a href="<?php echo $renew_link; ?>">renew your membership</a> or visit the <a href="/home/join-renew/">Join page</a> to see what other membership options are available.';
 			if ($team->is_user_owner($current_user->ID)) {
 				$count = self::count_remaining_memberships('wc_memberships_team', $current_user->ID, $team->get_id());
 				if ($count > 0) {
@@ -940,48 +944,55 @@ class PwtcMembers {
 					return ob_get_clean();		
 				}
 				else if ($team->is_membership_expired()) {
+					$expired = true;
 					ob_start();
 					?>
-					<div class="callout warning"><p>Your family membership "<?php echo $team->get_name(); ?>" expired on <?php echo date('F j, Y', $team->get_local_membership_end_date('timestamp')); ?>. <a href="<?php echo $team->get_renew_membership_url(); ?>">Click here to renew</a></p></div>		
+					<div class="callout warning"><p>Your family membership "<?php echo $team_name; ?>" expired on <?php echo date('F j, Y', $expiration_date); ?>. <?php echo $renew_msg; ?></p></div>		
 					<?php
 					return ob_get_clean();
 				}
 				else {
+					$expired = false;
 					if ($a['renewonly'] == 'yes') {
 						return '';
-					}			
+					}
 					ob_start();
 					?>
-					<div class="callout success"><p>Your family membership "<?php echo $team->get_name(); ?>" will expire on <?php echo date('F j, Y', $team->get_local_membership_end_date('timestamp')); ?></p></div>		
+					<div class="callout success"><p>Your family membership "<?php echo $team_name; ?>" will expire on <?php echo date('F j, Y', $expiration_date); ?></p></div>		
 					<?php
 					return ob_get_clean();
 				}
 			}
 			else {
 				if ($team->is_membership_expired()) {
+					$expired = true;
 					ob_start();
 					?>
-					<div class="callout warning"><p>Your family membership "<?php echo $team->get_name(); ?>" expired on <?php echo date('F j, Y',$team->get_local_membership_end_date('timestamp')); ?>, please ask the membership owner to renew</p></div>		
+					<div class="callout warning"><p>Your family membership "<?php echo $team_name; ?>" expired on <?php echo date('F j, Y',$expiration_date); ?>, please ask the membership owner to renew</p></div>		
 					<?php
 					return ob_get_clean();	
 				}
 				else {
+					$expired = false;
 					if ($a['renewonly'] == 'yes') {
 						return '';
 					}			
 					ob_start();
 					?>
-					<div class="callout success"><p>Your family membership "<?php echo $team->get_name(); ?>" will expire on <?php echo date('F j, Y',$team->get_local_membership_end_date('timestamp')); ?></p></div>		
+					<div class="callout success"><p>Your family membership "<?php echo $team_name; ?>" will expire on <?php echo date('F j, Y',$expiration_date); ?></p></div>		
 					<?php
 					return ob_get_clean();
 				}
 			}
 		}
 		else {
+			$renew_link = $membership->get_renew_membership_url();
+			$expiration_date = $membership->get_local_end_date('timestamp');
+			$renew_msg = 'You can either <a href="<?php echo $renew_link; ?>">renew your membership</a> or visit the <a href="/home/join-renew/">Join page</a> to see what other membership options are available.';
 			if ($membership->is_expired()) {
 				ob_start();
 				?>
-				<div class="callout warning"><p>Your individual membership expired on <?php echo date('F j, Y', $membership->get_local_end_date('timestamp')); ?>. <a href="<?php echo $membership->get_renew_membership_url(); ?>">Click here to renew</a></p></div>		
+				<div class="callout warning"><p>Your individual membership expired on <?php echo date('F j, Y', $expiration_date); ?>. <?php echo $renew_msg; ?></p></div>		
 				<?php
 				return ob_get_clean();
 			}
@@ -992,7 +1003,7 @@ class PwtcMembers {
 				if ($membership->has_end_date()) {
 					ob_start();
 					?>
-					<div class="callout success"><p>Your individual membership will expire on <?php echo date('F j, Y', $membership->get_local_end_date('timestamp')); ?></p></div>		
+					<div class="callout success"><p>Your individual membership will expire on <?php echo date('F j, Y', $expiration_date); ?></p></div>		
 					<?php
 					return ob_get_clean();
 				}
