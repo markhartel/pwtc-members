@@ -944,7 +944,6 @@ class PwtcMembers {
 					return ob_get_clean();		
 				}
 				else if ($team->is_membership_expired()) {
-					$expired = true;
 					ob_start();
 					?>
 					<div class="callout warning"><p>Your family membership "<?php echo $team_name; ?>" expired on <?php echo date('F j, Y', $expiration_date); ?>. <?php echo $renew_msg; ?></p></div>		
@@ -952,7 +951,6 @@ class PwtcMembers {
 					return ob_get_clean();
 				}
 				else {
-					$expired = false;
 					if ($a['renewonly'] == 'yes') {
 						return '';
 					}
@@ -965,7 +963,6 @@ class PwtcMembers {
 			}
 			else {
 				if ($team->is_membership_expired()) {
-					$expired = true;
 					ob_start();
 					?>
 					<div class="callout warning"><p>Your family membership "<?php echo $team_name; ?>" expired on <?php echo date('F j, Y',$expiration_date); ?>, please ask the membership owner to renew</p></div>		
@@ -973,7 +970,6 @@ class PwtcMembers {
 					return ob_get_clean();	
 				}
 				else {
-					$expired = false;
 					if ($a['renewonly'] == 'yes') {
 						return '';
 					}			
