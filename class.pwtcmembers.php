@@ -896,7 +896,7 @@ class PwtcMembers {
 
 	// Generates the [pwtc_member_renew_nag] shortcode.
 	public static function shortcode_member_renew_nag($atts) {
-		$a = shortcode_atts(array('renewonly' => 'no'), $atts);
+		$a = shortcode_atts(array('renewonly' => 'no', 'pad' => '30'), $atts);
 		$current_user = wp_get_current_user();
 		if ( 0 == $current_user->ID ) {
 			return '';
@@ -924,6 +924,8 @@ class PwtcMembers {
 			<?php
 			return ob_get_clean();
 		}
+		$timezone = new DateTimeZone(pwtc_get_timezone_string());
+		$now_date = new DateTime(null, $timezone);
 		$membership = $memberships[0];
 		$team = false;
 		if (function_exists('wc_memberships_for_teams_get_user_membership_team')) {
