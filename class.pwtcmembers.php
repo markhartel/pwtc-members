@@ -926,6 +926,7 @@ class PwtcMembers {
 		}
 		$timezone = new DateTimeZone(pwtc_get_timezone_string());
 		$now_date = new DateTime(null, $timezone);
+		$expire_pad = new DateInterval('P' . $a['pad'] . 'D');
 		$membership = $memberships[0];
 		$team = false;
 		if (function_exists('wc_memberships_for_teams_get_user_membership_team')) {
@@ -934,6 +935,8 @@ class PwtcMembers {
 		if ($team) {
 			$renew_link = $team->get_renew_membership_url();
 			$expiration_date = $team->get_local_membership_end_date('timestamp');
+			$expire_pad_date = ?;
+			$expire_pad_date->sub($expire_pad);
 			$team_name = $team->get_name();
 			$renew_msg = 'You can either <a href="<?php echo $renew_link; ?>">renew your membership</a> or visit the <a href="/home/join-renew/">Join page</a> to see what other membership options are available.';
 			if ($team->is_user_owner($current_user->ID)) {
@@ -956,9 +959,12 @@ class PwtcMembers {
 					if ($a['renewonly'] == 'yes') {
 						return '';
 					}
+					if ($now_date < $expire_pad_date) {
+						$renew_msg = '';
+					}
 					ob_start();
 					?>
-					<div class="callout success"><p>Your family membership "<?php echo $team_name; ?>" will expire on <?php echo date('F j, Y', $expiration_date); ?></p></div>		
+					<div class="callout success"><p>Your family membership "<?php echo $team_name; ?>" will expire on <?php echo date('F j, Y', $expiration_date); ?>. <?php echo $renew_msg; ?></p></div>		
 					<?php
 					return ob_get_clean();
 				}
@@ -1001,7 +1007,7 @@ class PwtcMembers {
 				if ($membership->has_end_date()) {
 					ob_start();
 					?>
-					<div class="callout success"><p>Your individual membership will expire on <?php echo date('F j, Y', $expiration_date); ?></p></div>		
+					<div class="callout success"><p>Your individual membership will expire on <?php echo date('F j, Y', $expiration_date); ?>. <?php echo $renew_msg; ?></p></div>		
 					<?php
 					return ob_get_clean();
 				}
