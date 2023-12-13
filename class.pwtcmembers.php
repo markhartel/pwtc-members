@@ -935,10 +935,10 @@ class PwtcMembers {
 		if ($team) {
 			$renew_link = $team->get_renew_membership_url();
 			$expiration_date = $team->get_local_membership_end_date('timestamp');
-			$expire_pad_date = new DateTime($expiration_date, $timezone);
+			$expire_pad_date = new DateTime('@'.$expiration_date, $timezone);
 			$expire_pad_date->sub($expire_pad);
 			$team_name = $team->get_name();
-			$renew_msg = 'You can either <a href="<?php echo $renew_link; ?>">renew your membership</a> or visit the <a href="/home/join-renew/">Join page</a> to see what other membership options are available.';
+			$renew_msg = 'You can either <a href="' . $renew_link . '">renew your membership</a> or visit the <a href="/home/join-renew/">Join page</a> to see what other membership options are available.';
 			if ($team->is_user_owner($current_user->ID)) {
 				$count = self::count_remaining_memberships('wc_memberships_team', $current_user->ID, $team->get_id());
 				if ($count > 0) {
@@ -992,9 +992,9 @@ class PwtcMembers {
 		else {
 			$renew_link = $membership->get_renew_membership_url();
 			$expiration_date = $membership->get_local_end_date('timestamp');
-			$expire_pad_date = new DateTime($expiration_date, $timezone);
+			$expire_pad_date = new DateTime('@'.$expiration_date, $timezone);
 			$expire_pad_date->sub($expire_pad);
-			$renew_msg = 'You can either <a href="<?php echo $renew_link; ?>">renew your membership</a> or visit the <a href="/home/join-renew/">Join page</a> to see what other membership options are available.';
+			$renew_msg = 'You can either <a href="' . $renew_link . '">renew your membership</a> or visit the <a href="/home/join-renew/">Join page</a> to see what other membership options are available.';
 			if ($membership->is_expired()) {
 				ob_start();
 				?>
