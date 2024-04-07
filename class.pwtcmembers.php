@@ -1400,7 +1400,7 @@ class PwtcMembers {
 		return '' . $the_query->found_posts;
 	}
 
-	public static function count_family_memberships() {
+	public static function count_family_memberships($active_only=false) {
 		$query_args = [
 			'nopaging'    => true,
 			'post_status' => 'any',
@@ -1409,7 +1409,17 @@ class PwtcMembers {
 			'cache_results'  => false,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,		
-		];			
+		];
+		if ($active_only) {
+			$timezone = new DateTimeZone(pwtc_get_timezone_string());
+			$now_date = new DateTime(null, $timezone);
+			$query_args['meta_query'] = [
+				'key' => '_membership_end_date',
+				'value' => $now_date->format('Y-m-d 00:00:00'),
+				'compare' => '>=',
+				'type' => 'DATETIME'
+			];
+		}
 		$the_query = new WP_Query($query_args);
 		if (empty($the_query)) {
 			return 'unknown';
@@ -1417,12 +1427,22 @@ class PwtcMembers {
 		return '' . $the_query->found_posts;
 	}
 
-	public static function count_family_members() {
+	public static function count_family_members($active_only=false) {
 		$query_args = [
 			'nopaging'    => true,
 			'post_status' => 'any',
 			'post_type' => 'wc_memberships_team',
-		];			
+		];
+		if ($active_only) {
+			$timezone = new DateTimeZone(pwtc_get_timezone_string());
+			$now_date = new DateTime(null, $timezone);
+			$query_args['meta_query'] = [
+				'key' => '_membership_end_date',
+				'value' => $now_date->format('Y-m-d 00:00:00'),
+				'compare' => '>=',
+				'type' => 'DATETIME'
+			];
+		}
 		$the_query = new WP_Query($query_args);
 		if (empty($the_query)) {
 			return 'unknown';
