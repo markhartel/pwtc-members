@@ -1415,12 +1415,12 @@ class PwtcMembers {
 		if ($active_only) {
 			$timezone = new DateTimeZone(pwtc_get_timezone_string());
 			$now_date = new DateTime(null, $timezone);
-			$query_args['meta_query'] = [
+			$query_args['meta_query'] = [[
 				'key' => '_membership_end_date',
 				'value' => $now_date->format('Y-m-d 00:00:00'),
 				'compare' => '>=',
 				'type' => 'DATETIME'
-			];
+			]];
 		}
 		$the_query = new WP_Query($query_args);
 		if (empty($the_query)) {
@@ -1438,12 +1438,12 @@ class PwtcMembers {
 		if ($active_only) {
 			$timezone = new DateTimeZone(pwtc_get_timezone_string());
 			$now_date = new DateTime(null, $timezone);
-			$query_args['meta_query'] = [
+			$query_args['meta_query'] = [[
 				'key' => '_membership_end_date',
 				'value' => $now_date->format('Y-m-d 00:00:00'),
 				'compare' => '>=',
 				'type' => 'DATETIME'
-			];
+			]];
 		}
 		$the_query = new WP_Query($query_args);
 		if (empty($the_query)) {
