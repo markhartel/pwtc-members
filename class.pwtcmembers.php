@@ -818,14 +818,16 @@ class PwtcMembers {
 	
 	// Generates the [pwtc_member_families] shortcode.
 	public static function shortcode_member_families($atts) {
+		$a = shortcode_atts(array('active_only' => 'no'), $atts);
+		$active_only = $a['active_only'] == 'yes';
 		$current_user = wp_get_current_user();
 		if ( 0 == $current_user->ID ) {
 			return '<div class="callout small warning"><p>Please log in to view the family member statistics.</p></div>';
 		}
 		else {
 			$today = date('F j Y', current_time('timestamp'));
-			$families = self::count_family_memberships();
-			$family_members = self::count_family_members();
+			$families = self::count_family_memberships($active_only);
+			$family_members = self::count_family_members($active_only);
 			$multifamilies = self::fetch_users_with_multi_memberships('wc_memberships_team', true);
 			ob_start();
 			?>
