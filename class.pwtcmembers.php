@@ -832,7 +832,7 @@ class PwtcMembers {
 			ob_start();
 			?>
 			<div>Family member statistics as of <?php echo $today; ?>:<br>
-			<?php echo $families; ?> family memberships with a total of <?php echo $family_members; ?> family members<br><?php echo $multifamilies; ?> users owning multiple family memberships
+			<?php echo $families; ?> <?php if ($active_only) { ?>active<?php } ?> family memberships with a total of <?php echo $family_members; ?> family members<br><?php echo $multifamilies; ?> users owning multiple family memberships
 			</div>
 			<?php
 			return ob_get_clean();
