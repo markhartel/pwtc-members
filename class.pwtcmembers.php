@@ -804,13 +804,13 @@ class PwtcMembers {
 			?>
 			<div>Membership statistics as of <?php echo $today; ?>:<br>
 			<?php echo $total; ?> total members<ul>
-			<li><?php echo $active; ?> active members</li>
-			<li><?php echo $expired; ?> expired members</li>
-			<li><?php echo $complimentary; ?> complimentary members</li>
-			<li><?php echo $delayed; ?> delayed members</li>
-			<li><?php echo $paused; ?> paused members</li>
-			<li><?php echo $cancelled; ?> cancelled members</li>
-			</ul><?php echo $multimembers; ?> users with multiple memberships</div>
+			<?php if ($active > 0) { ?><li><?php echo $active; ?> active members</li><?php } ?>
+			<?php if ($expired > 0) { ?><li><?php echo $expired; ?> expired members</li><?php } ?>
+			<?php if ($complimentary > 0) { ?><li><?php echo $complimentary; ?> complimentary members</li><?php } ?>
+			<?php if ($delayed > 0) { ?><li><?php echo $delayed; ?> delayed members</li><?php } ?>
+			<?php if ($paused > 0) { ?><li><?php echo $paused; ?> paused members</li><?php } ?>
+			<?php if ($cancelled > 0) { ?><li><?php echo $cancelled; ?> cancelled members</li><?php } ?>
+			</ul><?php if ($multimembers > 0) { ?><?php echo $multimembers; ?> users with multiple memberships</div><?php } ?>
 			<?php
 			return ob_get_clean();
 		}
@@ -832,7 +832,7 @@ class PwtcMembers {
 			ob_start();
 			?>
 			<div>Family member statistics as of <?php echo $today; ?>:<br>
-			<?php echo $families; ?> <?php if ($active_only) { ?>active<?php } ?> family memberships with a total of <?php echo $family_members; ?> family members<br><?php echo $multifamilies; ?> users owning multiple family memberships
+			<?php echo $families; ?> <?php if ($active_only) { ?>active<?php } ?> family memberships with a total of <?php echo $family_members; ?> family members<?php if ($multifamilies > 0) { ?><br><?php echo $multifamilies; ?> users owning multiple family memberships<?php } ?>
 			</div>
 			<?php
 			return ob_get_clean();
