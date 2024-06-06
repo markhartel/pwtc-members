@@ -810,7 +810,7 @@ class PwtcMembers {
 			<?php if ($delayed > 0) { ?><li><?php echo $delayed; ?> delayed members</li><?php } ?>
 			<?php if ($paused > 0) { ?><li><?php echo $paused; ?> paused members</li><?php } ?>
 			<?php if ($cancelled > 0) { ?><li><?php echo $cancelled; ?> cancelled members</li><?php } ?>
-			</ul><?php if ($multimembers > 0) { ?><?php echo $multimembers; ?> users with multiple memberships</div><?php } ?>
+			</ul><?php if ($multimembers > 0) { ?><?php echo $multimembers; ?> users with multiple memberships<?php } ?></div>
 			<?php
 			return ob_get_clean();
 		}
