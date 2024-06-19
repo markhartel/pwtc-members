@@ -915,7 +915,7 @@ class PwtcMembers {
 				'nopaging'    => true,
 				'post_status' => 'publish',
 				'post_type'   => 'shop_coupon',
-				'name'        => $coupon_name,
+				'title'       => $coupon_name,
 			];			
 			$the_query = new WP_Query($query_args);
 			if (empty($the_query)) {
