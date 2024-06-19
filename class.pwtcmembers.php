@@ -99,6 +99,9 @@ class PwtcMembers {
 		add_shortcode('pwtc_member_new_members', 
 			array( 'PwtcMembers', 'shortcode_member_new_members'));
 
+		add_shortcode('pwtc_member_coupon_users', 
+			array( 'PwtcMembers', 'shortcode_member_coupon_users'));
+
 		add_shortcode('pwtc_member_renew_nag', 
 			array( 'PwtcMembers', 'shortcode_member_renew_nag'));
 
@@ -916,18 +919,19 @@ class PwtcMembers {
 			];			
 			$the_query = new WP_Query($query_args);
 			if (empty($the_query)) {
-				return '<div class="callout small warning"><p>Cannot find coupon <?php echo $coupon_name; ?>.</p></div>';
+				return '<div class="callout small warning"><p>Cannot find coupon ' . $coupon_name . '.</p></div>';
 			}
 			if ( $the_query->have_posts() ) {
 				$the_query->the_post();
+				$coupon_title = get_the_title();
 				$used_by = get_post_meta(get_the_ID(), '_used_by');
-			}
-			else {
-				ob_start();
-				?>
-				<div>No one has used coupon TBD yet.</div>
-				<?php						
-				return ob_get_clean();
+				if (empty($used_by)) {
+					ob_start();
+					?>
+					<div>No one has used coupon <?php echo $coupon_title; ?> yet.</div>
+					<?php						
+					return ob_get_clean();
+				}
 			}
 		}
 	}
