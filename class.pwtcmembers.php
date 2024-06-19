@@ -932,6 +932,16 @@ class PwtcMembers {
 					<?php						
 					return ob_get_clean();
 				}
+				ob_start();
+				?>
+				<div>Users of coupon <?php echo $coupon_title; ?>:<ul>
+				<?php
+				//TODO: Walk through user list and display user names.
+				?>
+				</ul></div>
+				<?php						
+				wp_reset_postdata();
+				return ob_get_clean();
 			}
 		}
 	}
