@@ -943,6 +943,9 @@ class PwtcMembers {
 				wp_reset_postdata();
 				return ob_get_clean();
 			}
+			else {
+				return '<div class="callout small warning"><p>Cannot find coupon ' . $coupon_name . '.</p></div>';
+			}
 		}
 	}
 
