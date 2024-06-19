@@ -896,6 +896,42 @@ class PwtcMembers {
 		}
 	}
 
+	// Generates the [pwtc_member_coupon_users] shortcode.
+	public static function shortcode_member_coupon_users($atts) {
+		$a = shortcode_atts(array('coupon_name' => ''), $atts);
+		$current_user = wp_get_current_user();
+		if ( 0 == $current_user->ID ) {
+			return '<div class="callout small warning"><p>Please log in to view the coupon users.</p></div>';
+		}
+		else if (empty($a['coupon_name'])) {
+			return '<div class="callout small warning"><p>You must specify a coupon name.</p></div>';
+		}
+		else {
+			$coupon_name = $a['coupon_name'];
+			$query_args = [
+				'nopaging'    => true,
+				'post_status' => 'publish',
+				'post_type'   => 'shop_coupon',
+				'name'        => $coupon_name,
+			];			
+			$the_query = new WP_Query($query_args);
+			if (empty($the_query)) {
+				return '<div class="callout small warning"><p>Cannot find coupon <?php echo $coupon_name; ?>.</p></div>';
+			}
+			if ( $the_query->have_posts() ) {
+				$the_query->the_post();
+				$used_by = get_post_meta(get_the_ID(), '_used_by');
+			}
+			else {
+				ob_start();
+				?>
+				<div>No one has used coupon TBD yet.</div>
+				<?php						
+				return ob_get_clean();
+			}
+		}
+	}
+
 	// Generates the [pwtc_member_renew_nag] shortcode.
 	public static function shortcode_member_renew_nag($atts) {
 		$a = shortcode_atts(array('renewonly' => 'no', 'pad' => '30'), $atts);
