@@ -934,7 +934,7 @@ class PwtcMembers {
 				}
 				ob_start();
 				?>
-				<div>Users of coupon <?php echo $coupon_title; ?>:<ul>
+				<div>Users of coupon <?php echo $coupon_title; ?> (author <?php echo get_the_author_meta('first_name'); ?> <?php echo get_the_author_meta('last_name'); ?>):<ul>
 				<?php
 					foreach ($used_by as $userid) {
 						$info = get_userdata($userid);
