@@ -936,7 +936,18 @@ class PwtcMembers {
 				?>
 				<div>Users of coupon <?php echo $coupon_title; ?>:<ul>
 				<?php
-				//TODO: Walk through user list and display user names.
+					foreach ($used_by as $userid) {
+						$info = get_userdata($userid);
+        					if ($info) {
+            						$name = $info->first_name . ' ' . $info->last_name;
+						}
+						else {
+							$name = 'User ID ' . $userid;
+						}
+						?>
+						<li><?php echo $name ?></li>
+						<?php
+					}
 				?>
 				</ul></div>
 				<?php						
