@@ -924,17 +924,18 @@ class PwtcMembers {
 			if ( $the_query->have_posts() ) {
 				$the_query->the_post();
 				$coupon_title = get_the_title();
+				$coupon_desc = get_the_content();
 				$used_by = get_post_meta(get_the_ID(), '_used_by');
 				if (empty($used_by)) {
 					ob_start();
 					?>
-					<div>No one has used coupon <?php echo $coupon_title; ?> yet.</div>
+					<div>No one has used coupon <?php echo $coupon_title; ?> (<?php echo $coupon_desc; ?> Author <?php echo get_the_author_meta('first_name'); ?> <?php echo get_the_author_meta('last_name'); ?>)</div>
 					<?php						
 					return ob_get_clean();
 				}
 				ob_start();
 				?>
-				<div>Users of coupon <?php echo $coupon_title; ?> (author <?php echo get_the_author_meta('first_name'); ?> <?php echo get_the_author_meta('last_name'); ?>):<ul>
+				<div>Users of coupon <?php echo $coupon_title; ?> (<?php echo $coupon_desc; ?> Author <?php echo get_the_author_meta('first_name'); ?> <?php echo get_the_author_meta('last_name'); ?>)<ul>
 				<?php
 					foreach ($used_by as $userid) {
 						$info = get_userdata($userid);
