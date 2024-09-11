@@ -924,7 +924,7 @@ class PwtcMembers {
 			if ( $the_query->have_posts() ) {
 				$the_query->the_post();
 				$coupon_title = get_the_title();
-				$coupon_desc = get_the_content();
+				$coupon_desc = get_the_excerpt();
 				$used_by = get_post_meta(get_the_ID(), '_used_by');
 				if (empty($used_by)) {
 					ob_start();
