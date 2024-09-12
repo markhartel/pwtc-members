@@ -930,13 +930,13 @@ class PwtcMembers {
 				if (empty($used_by)) {
 					ob_start();
 					?>
-					<div>Coupon code <?php echo $coupon_title; ?><br><?php echo $coupon_desc; ?> (Created by <?php echo $coupon_author; ?>)</div>
+					<div>Coupon code <?php echo $coupon_title; ?><br><?php echo $coupon_desc; ?> (Created by <?php echo $coupon_author; ?>)<br>No one has used this code yet.</div>
 					<?php						
 					return ob_get_clean();
 				}
 				ob_start();
 				?>
-				<div>Coupon code <?php echo $coupon_title; ?><br><?php echo $coupon_desc; ?> (Created by <?php echo $coupon_author; ?>)<ul>
+				<div>Coupon code <?php echo $coupon_title; ?><br><?php echo $coupon_desc; ?> (Created by <?php echo $coupon_author; ?>)<br>Used by the following persons:<ul>
 				<?php
 					foreach ($used_by as $userid) {
 						$info = get_userdata($userid);
