@@ -924,19 +924,23 @@ class PwtcMembers {
 			if ( $the_query->have_posts() ) {
 				$the_query->the_post();
 				$coupon_title = get_the_title();
-				$coupon_desc = get_the_excerpt();
+				$coupon_excerpt = '';
+				if (has_excerpt()) {
+    					$coupon_excerpt = wp_strip_all_tags(get_the_excerpt(), true);
+				}
 				$coupon_author = get_the_author_meta('first_name') . ' ' . get_the_author_meta('last_name')
 				$used_by = get_post_meta(get_the_ID(), '_used_by');
 				if (empty($used_by)) {
 					ob_start();
 					?>
-					<div>Coupon code <?php echo $coupon_title; ?><br><?php echo $coupon_desc; ?> (Created by <?php echo $coupon_author; ?>)<br>No one has used this code yet.</div>
-					<?php						
+					<div>Coupon code <?php echo $coupon_title; ?><br><?php echo $coupon_excerpt; ?> (Created by <?php echo $coupon_author; ?>)<br>No one has used this code yet.</div>
+					<?php
+					wp_reset_postdata();
 					return ob_get_clean();
 				}
 				ob_start();
 				?>
-				<div>Coupon code <?php echo $coupon_title; ?><br><?php echo $coupon_desc; ?> (Created by <?php echo $coupon_author; ?>)<br>Used by the following persons:<ul>
+				<div>Coupon code <?php echo $coupon_title; ?><br><?php echo $coupon_excerpt; ?> (Created by <?php echo $coupon_author; ?>)<br>Used by the following persons:<ul>
 				<?php
 					foreach ($used_by as $userid) {
 						$info = get_userdata($userid);
