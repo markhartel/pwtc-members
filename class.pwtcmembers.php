@@ -948,7 +948,7 @@ class PwtcMembers {
             						$name = $info->first_name . ' ' . $info->last_name;
 						}
 						else {
-							$name = 'User ID ' . $userid;
+							$name = 'Deleted user ' . $userid;
 						}
 						?>
 						<li><?php echo $name ?></li>
