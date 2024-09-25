@@ -37,8 +37,8 @@ class PwtcMembers {
 		add_filter( 'woocommerce_process_checkout_field_billing_phone',
 			'pwtc_members_format_phone_number' );
 		
-		add_filter('woocommerce_get_terms_and_conditions_checkbox_text', 
-			array('PwtcMembers', 'get_terms_and_conditions_checkbox_text_callback'));
+		//add_filter('woocommerce_get_terms_and_conditions_checkbox_text', 
+		//	array('PwtcMembers', 'get_terms_and_conditions_checkbox_text_callback'));
 
 		add_filter( 'wc_memberships_members_area_my_membership_details', 
 			array( 'PwtcMembers', 'members_area_membership_details_callback' ), 10, 2 );
