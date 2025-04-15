@@ -36,6 +36,8 @@ Argument|Description|Values|Default
 --------|-----------|------|-------
 lookback|the number of months to look back for new members|(number)|0
 
+`[pwtc_member_coupon_users]` *TDB*
+
 ### Membership Nag Shortcodes
 
 `[pwtc_member_renew_nag]` *nags the logged in user to renew their membership if expired*
